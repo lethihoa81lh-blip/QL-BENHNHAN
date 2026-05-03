@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Quản lý bệnh nhân tâm thần</title>
+    <title>Quản lý bệnh nhân</title>
 </head>
 <body>
 
 <h2>Quản lý bệnh nhân</h2>
 
-<!-- NHẬP -->
 <input id="ten" placeholder="Họ tên">
 <input id="namsinh" type="number" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
@@ -20,7 +19,6 @@
 
 <hr>
 
-<!-- LỌC -->
 <input id="locTen" placeholder="Lọc tên" oninput="hienThi()">
 <input id="locNha" placeholder="Lọc nhà" oninput="hienThi()">
 <input id="locThuoc" placeholder="Lọc thuốc" oninput="hienThi()">
@@ -39,7 +37,7 @@
 <th>Tái khám</th>
 <th>Hành động</th>
 </tr>
-<tbody id="ds"></tbody>
+<tbody id="bang"></tbody>
 </table>
 
 <script>
@@ -47,7 +45,18 @@ let danhSach = JSON.parse(localStorage.getItem("ds")) || [];
 let dangSua = -1;
 
 function luu() {
-    localStorage.setItem("ds", JSON.stringify(ds));
+    localStorage.setItem("ds", JSON.stringify(danhSach));
+}
+
+function layDuLieu() {
+    return {
+        ten: document.getElementById("ten").value,
+        namsinh: document.getElementById("namsinh").value,
+        nha: document.getElementById("nha").value,
+        thuoc: document.getElementById("thuoc").value,
+        ngaykham: document.getElementById("ngaykham").value,
+        taikham: document.getElementById("taikham").value
+    };
 }
 
 function them() {
@@ -57,17 +66,6 @@ function them() {
     hienThi();
 }
 
-function layDuLieu() {
-    return {
-        ten: ten.value,
-        namsinh: namsinh.value,
-        nha: nha.value,
-        thuoc: thuoc.value,
-        ngaykham: ngaykham.value,
-        taikham: taikham.value
-    };
-}
-
 function hienThi() {
     let html = "";
     let homNay = new Date();
@@ -75,20 +73,18 @@ function hienThi() {
     for (let i = 0; i < danhSach.length; i++) {
         let bn = danhSach[i];
 
-        // LỌC
+        // lọc
         if (locTen.value && !bn.ten.toLowerCase().includes(locTen.value.toLowerCase())) continue;
         if (locNha.value && !bn.nha.toLowerCase().includes(locNha.value.toLowerCase())) continue;
         if (locThuoc.value && !bn.thuoc.toLowerCase().includes(locThuoc.value.toLowerCase())) continue;
         if (locNgay.value && bn.taikham !== locNgay.value) continue;
 
-        // NHẮC LỊCH
+        // nhắc lịch
         let canhBao = "";
         if (bn.taikham) {
             let tk = new Date(bn.taikham);
             let diff = (tk - homNay) / (1000*60*60*24);
-            if (diff <= 1 && diff >= 0) {
-                canhBao = "🔔";
-            }
+            if (diff <= 1 && diff >= 0) canhBao = "🔔";
         }
 
         html += `<tr>
@@ -106,19 +102,19 @@ function hienThi() {
         </tr>`;
     }
 
-    document.getElementById("ds").innerHTML = html;
+    document.getElementById("bang").innerHTML = html;
 }
 
 function xoa(i) {
     if (confirm("Xóa bệnh nhân?")) {
-        ds.splice(i,1);
+        danhSach.splice(i,1);
         luu();
         hienThi();
     }
 }
 
 function sua(i) {
-    let bn = ds[i];
+    let bn = danhSach[i];
     ten.value = bn.ten;
     namsinh.value = bn.namsinh;
     nha.value = bn.nha;
@@ -131,7 +127,7 @@ function sua(i) {
 }
 
 function capNhat() {
-    ds[dangSua] = layDuLieu();
+    danhSach[dangSua] = layDuLieu();
     dangSua = -1;
     btnUpdate.style.display = "none";
     luu();
