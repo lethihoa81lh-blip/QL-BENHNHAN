@@ -42,7 +42,51 @@ button.small {
 }
 </style>
 </head>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+const firebaseConfig = {
+  apiKey: "XXXX",
+  authDomain: "XXXX",
+  projectId: "XXXX",
+  storageBucket: "XXXX",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// THÊM BỆNH NHÂN
+window.themBenhNhan = async function(data) {
+    await addDoc(collection(db, "benhnhan"), data);
+    alert("Đã lưu online!");
+    loadBenhNhan();
+}
+
+// LOAD DỮ LIỆU
+async function loadBenhNhan() {
+    const querySnapshot = await getDocs(collection(db, "benhnhan"));
+    let html = "";
+
+    querySnapshot.forEach((doc) => {
+        let bn = doc.data();
+        html += `
+        <tr>
+            <td>${bn.ten}</td>
+            <td>${bn.namsinh}</td>
+            <td>${bn.nha}</td>
+            <td>${bn.thuoc}</td>
+            <td>${bn.taikham}</td>
+        </tr>`;
+    });
+
+    document.getElementById("danhsach").innerHTML = html;
+}
+
+loadBenhNhan();
+</script>
 <body>
 
 <h2>Quản lý bệnh nhân</h2>
