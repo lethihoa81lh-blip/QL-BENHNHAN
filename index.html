@@ -59,7 +59,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <br>
 
-<input type="text" id="timkiem" placeholder="Lọc tên hoặc nhà..." onkeyup="loc()">
+<input type="text" id="timkiem" placeholder="Lọc: tên / nhà / thuốc / ngày tái khám..." onkeyup="loc()">
 
 <!-- BẢNG -->
 <div class="container">
@@ -125,13 +125,15 @@ function hienThi(data = ds) {
     document.getElementById("dulieu").innerHTML = html;
 }
 
-// lọc
+// lọc nâng cao
 function loc() {
     let key = document.getElementById("timkiem").value.toLowerCase();
 
     let filtered = ds.filter(p =>
-        p.ten.toLowerCase().includes(key) ||
-        p.nha.toLowerCase().includes(key)
+        (p.ten && p.ten.toLowerCase().includes(key)) ||
+        (p.nha && p.nha.toLowerCase().includes(key)) ||
+        (p.thuoc && p.thuoc.toLowerCase().includes(key)) ||
+        (p.ngaytaikham && p.ngaytaikham.toLowerCase().includes(key))
     );
 
     hienThi(filtered);
