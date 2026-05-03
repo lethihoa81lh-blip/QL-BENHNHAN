@@ -25,9 +25,8 @@ th { background: #f2f2f2; }
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 
-<input id="chandoan1" placeholder="Chẩn đoán 1">
-<input id="chandoan2" placeholder="Chẩn đoán 2">
-
+<input id="chandoan" placeholder="Chẩn đoán">
+<input id="thuoc" placeholder="Thuốc">
 <input id="bhyt" placeholder="Số thẻ BHYT">
 
 <br>
@@ -41,12 +40,14 @@ th { background: #f2f2f2; }
 <table>
 <thead>
 <tr>
-<th>Họ tên<br><input id="locTen" onkeyup="locCot()"></th>
-<th>Năm sinh<br><input id="locNam" onkeyup="locCot()"></th>
-<th>Nhà<br><input id="locNha" onkeyup="locCot()"></th>
-<th>Chẩn đoán 1<br><input id="locCD1" onkeyup="locCot()"></th>
-<th>Chẩn đoán 2</th>
-<th>BHYT<br><input id="locBHYT" onkeyup="locCot()"></th>
+<th>Họ tên<br><input id="f_ten" onkeyup="locCot()"></th>
+<th>Năm sinh<br><input id="f_namsinh" onkeyup="locCot()"></th>
+<th>Nhà<br><input id="f_nha" onkeyup="locCot()"></th>
+
+<th>Chẩn đoán<br><input id="f_cd" onkeyup="locCot()"></th>
+<th>Thuốc<br><input id="f_thuoc" onkeyup="locCot()"></th>
+<th>BHYT<br><input id="f_bhyt" onkeyup="locCot()"></th>
+
 <th>Hành động</th>
 </tr>
 </thead>
@@ -72,7 +73,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let ds = [];
-let idDangSua = null;
+let idSua = null;
 
 /* LOAD */
 async function loadData() {
@@ -88,8 +89,8 @@ function layData() {
         ten: ten.value,
         namsinh: namsinh.value,
         nha: nha.value,
-        chandoan1: chandoan1.value,
-        chandoan2: chandoan2.value,
+        chandoan: chandoan.value,
+        thuoc: thuoc.value,
         bhyt: bhyt.value
     };
 }
@@ -112,8 +113,8 @@ function hienThi(data) {
             <td>${p.ten || ""}</td>
             <td>${p.namsinh || ""}</td>
             <td>${p.nha || ""}</td>
-            <td>${p.chandoan1 || ""}</td>
-            <td>${p.chandoan2 || ""}</td>
+            <td>${p.chandoan || ""}</td>
+            <td>${p.thuoc || ""}</td>
             <td>${p.bhyt || ""}</td>
             <td>
                 <button onclick="sua('${p.id}')">Sửa</button>
@@ -138,43 +139,44 @@ window.sua = function (id) {
     ten.value = p.ten;
     namsinh.value = p.namsinh;
     nha.value = p.nha;
-    chandoan1.value = p.chandoan1;
-    chandoan2.value = p.chandoan2;
+    chandoan.value = p.chandoan;
+    thuoc.value = p.thuoc;
     bhyt.value = p.bhyt;
 
-    idDangSua = id;
+    idSua = id;
 }
 
 /* CẬP NHẬT */
 window.capNhat = async function () {
-    if (!idDangSua) return alert("Chọn bệnh nhân để sửa");
+    if (!idSua) return alert("Chọn bệnh nhân để sửa");
 
-    await updateDoc(doc(db, "benhnhan", idDangSua), layData());
-    idDangSua = null;
+    await updateDoc(doc(db, "benhnhan", idSua), layData());
+    idSua = null;
     clearForm();
     loadData();
 }
 
-/* LỌC */
+/* LỌC TẤT CẢ CỘT */
 window.locCot = function () {
     let f = ds.filter(p =>
-        (p.ten || "").toLowerCase().includes(locTen.value.toLowerCase()) &&
-        (p.namsinh || "").includes(locNam.value) &&
-        (p.nha || "").toLowerCase().includes(locNha.value.toLowerCase()) &&
-        (p.chandoan1 || "").toLowerCase().includes(locCD1.value.toLowerCase()) &&
-        (p.bhyt || "").toLowerCase().includes(locBHYT.value.toLowerCase())
+        (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
+        (p.namsinh || "").includes(f_namsinh.value) &&
+        (p.nha || "").toLowerCase().includes(f_nha.value.toLowerCase()) &&
+        (p.chandoan || "").toLowerCase().includes(f_cd.value.toLowerCase()) &&
+        (p.thuoc || "").toLowerCase().includes(f_thuoc.value.toLowerCase()) &&
+        (p.bhyt || "").toLowerCase().includes(f_bhyt.value.toLowerCase())
     );
 
     hienThi(f);
 }
 
-/* CLEAR FORM */
+/* CLEAR */
 function clearForm() {
     ten.value = "";
     namsinh.value = "";
     nha.value = "";
-    chandoan1.value = "";
-    chandoan2.value = "";
+    chandoan.value = "";
+    thuoc.value = "";
     bhyt.value = "";
 }
 
@@ -184,18 +186,17 @@ window.xuatExcel = function () {
         "Họ tên": p.ten,
         "Năm sinh": p.namsinh,
         "Nhà": p.nha,
-        "Chẩn đoán 1": p.chandoan1,
-        "Chẩn đoán 2": p.chandoan2,
+        "Chẩn đoán": p.chandoan,
+        "Thuốc": p.thuoc,
         "BHYT": p.bhyt
     }));
 
     let wb = XLSX.utils.book_new();
     let ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
+    XLSX.utils.book_append_sheet(wb, ws, "DS");
     XLSX.writeFile(wb, "benhnhan.xlsx");
 }
 
-/* INIT */
 window.onload = loadData;
 
 </script>
