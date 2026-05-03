@@ -11,7 +11,7 @@ body { font-family: Arial; padding: 20px; }
 input, button { padding: 6px; margin: 5px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #ccc; padding: 8px; }
-th { position: sticky; top: 0; background: #f2f2f2; }
+th { background: #f2f2f2; }
 .container { max-height: 400px; overflow-y: auto; }
 </style>
 </head>
@@ -72,12 +72,24 @@ const db = getFirestore(app);
 let ds = [];
 let idDangSua = null;
 
-// LOAD
+// LOAD DATA
 async function loadData() {
     const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
     snap.forEach(d => ds.push({ id: d.id, ...d.data() }));
     hienThi(ds);
+}
+
+// LẤY DỮ LIỆU FORM
+function layData() {
+    return {
+        ten: document.getElementById("ten").value,
+        namsinh: document.getElementById("namsinh").value,
+        nha: document.getElementById("nha").value,
+        thuoc: document.getElementById("thuoc").value,
+        ngaykham: document.getElementById("ngaykham").value,
+        ngaytaikham: document.getElementById("ngaytaikham").value
+    };
 }
 
 // THÊM
@@ -86,20 +98,8 @@ window.them = async function() {
     if (!ten) return alert("Nhập tên!");
 
     await addDoc(collection(db, "benhnhan"), layData());
-    loadData();
     clearForm();
-}
-
-// LẤY DATA
-function layData() {
-    return {
-        ten: ten.value,
-        namsinh: namsinh.value,
-        nha: nha.value,
-        thuoc: thuoc.value,
-        ngaykham: ngaykham.value,
-        ngaytaikham: ngaytaikham.value
-    };
+    loadData();
 }
 
 // HIỂN THỊ + CẢNH BÁO
@@ -121,23 +121,23 @@ function hienThi(data) {
 
         html += `
         <tr style="${mau}">
-        <td>${p.ten}</td>
-        <td>${p.namsinh}</td>
-        <td>${p.nha}</td>
-        <td>${p.thuoc}</td>
-        <td>${formatDate(p.ngaykham)}</td>
-        <td>${formatDate(p.ngaytaikham)}</td>
-        <td>
-        <button onclick="sua('${p.id}')">Sửa</button>
-        <button onclick="xoa('${p.id}')">Xoá</button>
-        </td>
+            <td>${p.ten}</td>
+            <td>${p.namsinh}</td>
+            <td>${p.nha}</td>
+            <td>${p.thuoc}</td>
+            <td>${formatDate(p.ngaykham)}</td>
+            <td>${formatDate(p.ngaytaikham)}</td>
+            <td>
+                <button onclick="sua('${p.id}')">Sửa</button>
+                <button onclick="xoa('${p.id}')">Xoá</button>
+            </td>
         </tr>`;
     });
 
-    dulieu.innerHTML = html;
+    document.getElementById("dulieu").innerHTML = html;
 }
 
-// FORMAT
+// FORMAT DATE
 function formatDate(d){
     if(!d) return "";
     return new Date(d).toLocaleDateString('vi-VN');
@@ -152,17 +152,18 @@ window.xoa = async function(id){
 // SỬA
 window.sua = function(id){
     let p = ds.find(x=>x.id==id);
-    ten.value=p.ten;
-    namsinh.value=p.namsinh;
-    nha.value=p.nha;
-    thuoc.value=p.thuoc;
-    ngaykham.value=p.ngaykham;
-    ngaytaikham.value=p.ngaytaikham;
+    document.getElementById("ten").value=p.ten;
+    document.getElementById("namsinh").value=p.namsinh;
+    document.getElementById("nha").value=p.nha;
+    document.getElementById("thuoc").value=p.thuoc;
+    document.getElementById("ngaykham").value=p.ngaykham;
+    document.getElementById("ngaytaikham").value=p.ngaytaikham;
     idDangSua=id;
 }
 
 // CẬP NHẬT
 window.capNhat = async function(){
+    if(!idDangSua) return alert("Chọn bệnh nhân để sửa");
     await updateDoc(doc(db,"benhnhan",idDangSua), layData());
     idDangSua=null;
     clearForm();
@@ -172,20 +173,20 @@ window.capNhat = async function(){
 // LỌC THEO CỘT
 window.locCot = function(){
     let f = ds.filter(p =>
-        (p.ten||"").toLowerCase().includes(locTen.value.toLowerCase()) &&
-        (p.namsinh||"").includes(locNam.value) &&
-        (p.nha||"").toLowerCase().includes(locNha.value.toLowerCase()) &&
-        (p.thuoc||"").toLowerCase().includes(locThuoc.value.toLowerCase())
+        (p.ten||"").toLowerCase().includes(document.getElementById("locTen").value.toLowerCase()) &&
+        (p.namsinh||"").toString().includes(document.getElementById("locNam").value) &&
+        (p.nha||"").toLowerCase().includes(document.getElementById("locNha").value.toLowerCase()) &&
+        (p.thuoc||"").toLowerCase().includes(document.getElementById("locThuoc").value.toLowerCase())
     );
     hienThi(f);
 }
 
-// CLEAR
+// CLEAR FORM
 function clearForm(){
     document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
-// EXCEL
+// XUẤT EXCEL
 window.xuatExcel=function(){
     let data=ds.map(p=>({
         "Tên":p.ten,
@@ -202,8 +203,8 @@ window.xuatExcel=function(){
     XLSX.writeFile(wb,"benhnhan.xlsx");
 }
 
-// AUTO LOAD
-window.onload=loadData;
+// LOAD KHI MỞ WEB
+window.onload = loadData;
 
 </script>
 
