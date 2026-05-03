@@ -42,51 +42,7 @@ button.small {
 }
 </style>
 </head>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  projectId: "XXXX",
-  storageBucket: "XXXX",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// THÊM BỆNH NHÂN
-window.themBenhNhan = async function(data) {
-    await addDoc(collection(db, "benhnhan"), data);
-    alert("Đã lưu online!");
-    loadBenhNhan();
-}
-
-// LOAD DỮ LIỆU
-async function loadBenhNhan() {
-    const querySnapshot = await getDocs(collection(db, "benhnhan"));
-    let html = "";
-
-    querySnapshot.forEach((doc) => {
-        let bn = doc.data();
-        html += `
-        <tr>
-            <td>${bn.ten}</td>
-            <td>${bn.namsinh}</td>
-            <td>${bn.nha}</td>
-            <td>${bn.thuoc}</td>
-            <td>${bn.taikham}</td>
-        </tr>`;
-    });
-
-    document.getElementById("danhsach").innerHTML = html;
-}
-
-loadBenhNhan();
-</script>
 <body>
 
 <h2>Quản lý bệnh nhân</h2>
@@ -104,7 +60,6 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <br>
 
 <button onclick="them()">Thêm</button>
-<button onclick="capNhat()">Cập nhật</button>
 <button onclick="xuatExcel()">Xuất Excel</button>
 
 <br>
@@ -122,35 +77,30 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <th>Thuốc</th>
 <th>Ngày khám</th>
 <th>Ngày tái khám</th>
-<th>Hành động</th>
 </tr>
-
-<!-- LỌC THEO CỘT -->
-<tr>
-<th><input oninput="locCot()" placeholder="Lọc tên"></th>
-<th><input oninput="locCot()" placeholder="Lọc năm"></th>
-<th><input oninput="locCot()" placeholder="Lọc nhà"></th>
-<th><input oninput="locCot()" placeholder="Lọc thuốc"></th>
-<th></th>
-<th><input oninput="locCot()" placeholder="Lọc tái khám"></th>
-<th></th>
-</tr>
-
 </thead>
 
 <tbody id="dulieu"></tbody>
 </table>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-let ds = JSON.parse(localStorage.getItem("ds_benhnhan")) || [];
-let indexDangSua = -1;
+const firebaseConfig = {
+  apiKey: "XXXX",
+  authDomain: "XXXX",
+  projectId: "XXXX",
+  storageBucket: "XXXX",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
 
-// ===== LƯU =====
-function luu() {
-    localStorage.setItem("ds_benhnhan", JSON.stringify(ds));
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let ds = [];
 
 // ===== FORMAT DATE =====
 function formatDateVN(dateStr) {
@@ -159,30 +109,48 @@ function formatDateVN(dateStr) {
     return d.toLocaleDateString('vi-VN');
 }
 
-// ===== INPUT DATE =====
-function toInputDate(dateStr) {
-    if (!dateStr) return "";
-    let p = dateStr.split("/");
-    return p[2] + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0');
-}
-
 // ===== THÊM =====
-function them() {
+window.them = async function() {
     let ten = document.getElementById("ten").value;
     if (!ten) return alert("Nhập tên!");
 
-    ds.push({
+    let data = {
         ten,
         namsinh: document.getElementById("namsinh").value,
         nha: document.getElementById("nha").value,
         thuoc: document.getElementById("thuoc").value,
         ngaykham: formatDateVN(document.getElementById("ngaykham").value),
         ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
+    };
+
+    await addDoc(collection(db, "benhnhan"), data);
+    loadData();
+    clearForm();
+}
+
+// ===== LOAD FIREBASE =====
+async function loadData() {
+    const querySnapshot = await getDocs(collection(db, "benhnhan"));
+    ds = [];
+
+    querySnapshot.forEach((doc) => {
+        ds.push(doc.data());
     });
 
-    luu();
-    hienThi();
-    clearForm();
+    hienThi(ds);
+}
+
+// ===== MIGRATE LOCAL → FIREBASE =====
+async function migrate() {
+    let local = JSON.parse(localStorage.getItem("ds_benhnhan")) || [];
+
+    if (local.length > 0) {
+        for (let item of local) {
+            await addDoc(collection(db, "benhnhan"), item);
+        }
+        localStorage.removeItem("ds_benhnhan");
+        alert("Đã chuyển dữ liệu cũ lên online!");
+    }
 }
 
 // ===== HIỂN THỊ =====
@@ -191,7 +159,7 @@ function hienThi(data = ds) {
     let today = new Date();
     today.setHours(0,0,0,0);
 
-    data.forEach((p, index) => {
+    data.forEach((p) => {
 
         let mau = "";
 
@@ -214,116 +182,12 @@ function hienThi(data = ds) {
             <td>${p.thuoc}</td>
             <td>${p.ngaykham}</td>
             <td>${p.ngaytaikham}</td>
-            <td>
-                <button class="small" onclick="chon(${index})">Sửa</button>
-                <button class="small" onclick="xoa(${index})">Xóa</button>
-            </td>
         </tr>`;
     });
 
     document.getElementById("dulieu").innerHTML = html;
 }
 
-// ===== CHỌN SỬA =====
-function chon(index) {
-    let p = ds[index];
-
-    document.getElementById("ten").value = p.ten;
-    document.getElementById("namsinh").value = p.namsinh;
-    document.getElementById("nha").value = p.nha;
-    document.getElementById("thuoc").value = p.thuoc;
-    document.getElementById("ngaykham").value = toInputDate(p.ngaykham);
-    document.getElementById("ngaytaikham").value = toInputDate(p.ngaytaikham);
-
-    indexDangSua = index;
-}
-
-// ===== CẬP NHẬT =====
-function capNhat() {
-    if (indexDangSua === -1) return alert("Chọn bệnh nhân cần sửa!");
-
-    ds[indexDangSua] = {
-        ten: document.getElementById("ten").value,
-        namsinh: document.getElementById("namsinh").value,
-        nha: document.getElementById("nha").value,
-        thuoc: document.getElementById("thuoc").value,
-        ngaykham: formatDateVN(document.getElementById("ngaykham").value),
-        ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
-    };
-
-    luu();
-    hienThi();
-    clearForm();
-    indexDangSua = -1;
-}
-
-// ===== XOÁ =====
-function xoa(index) {
-    if (confirm("Xóa bệnh nhân này?")) {
-        ds.splice(index, 1);
-        luu();
-        hienThi();
-    }
-}
-
-// ===== LỌC TỔNG =====
-function loc() {
-    let key = document.getElementById("timkiem").value.toLowerCase();
-
-    let filtered = ds.filter(p =>
-        (p.ten && p.ten.toLowerCase().includes(key)) ||
-        (p.nha && p.nha.toLowerCase().includes(key)) ||
-        (p.thuoc && p.thuoc.toLowerCase().includes(key)) ||
-        (p.ngaytaikham && p.ngaytaikham.toLowerCase().includes(key))
-    );
-
-    hienThi(filtered);
-}
-
-// ===== LỌC THEO CỘT =====
-function locCot() {
-    let inputs = document.querySelectorAll("thead input");
-
-    let fTen = inputs[0].value.toLowerCase();
-    let fNam = inputs[1].value.toLowerCase();
-    let fNha = inputs[2].value.toLowerCase();
-    let fThuoc = inputs[3].value.toLowerCase();
-    let fTK = inputs[4].value.toLowerCase();
-
-    let filtered = ds.filter(p =>
-        (!fTen || (p.ten && p.ten.toLowerCase().includes(fTen))) &&
-        (!fNam || (p.namsinh && p.namsinh.toString().includes(fNam))) &&
-        (!fNha || (p.nha && p.nha.toLowerCase().includes(fNha))) &&
-        (!fThuoc || (p.thuoc && p.thuoc.toLowerCase().includes(fThuoc))) &&
-        (!fTK || (p.ngaytaikham && p.ngaytaikham.toLowerCase().includes(fTK)))
-    );
-
-    hienThi(filtered);
-}
-
-// ===== RESET =====
-function clearForm() {
-    document.getElementById("ten").value = "";
-    document.getElementById("namsinh").value = "";
-    document.getElementById("nha").value = "";
-    document.getElementById("thuoc").value = "";
-    document.getElementById("ngaykham").value = "";
-    document.getElementById("ngaytaikham").value = "";
-}
-
-// ===== EXCEL =====
-function xuatExcel() {
-    let table = document.getElementById("bangdulieu");
-    let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
-    XLSX.writeFile(wb, "benhnhan.xlsx");
-}
-
-// ===== LOAD =====
-window.onload = function () {
-    hienThi();
-};
-
-</script>
-
-</body>
-</html>
+// ===== LỌC =====
+window.loc = function() {
+    let key = document.getElementById("tim
