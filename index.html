@@ -36,10 +36,6 @@ th {
     overflow-y: auto;
 }
 
-tr:hover {
-    background: #eef;
-}
-
 button.small {
     padding: 4px 8px;
     margin: 2px;
@@ -51,7 +47,6 @@ button.small {
 
 <h2>Quản lý bệnh nhân</h2>
 
-<!-- FORM -->
 <input type="text" id="ten" placeholder="Họ tên">
 <input type="number" id="namsinh" placeholder="Năm sinh">
 <input type="text" id="nha" placeholder="Nhà">
@@ -72,7 +67,6 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <input type="text" id="timkiem" placeholder="Lọc..." onkeyup="loc()">
 
-<!-- BẢNG -->
 <div class="container">
 <table id="bangdulieu">
 <thead>
@@ -94,21 +88,18 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 let ds = [];
 let indexDangSua = -1;
 
-// format ngày
 function formatDateVN(dateStr) {
     if (!dateStr) return "";
     let d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN');
 }
 
-// chuyển lại cho input
 function toInputDate(dateStr) {
     if (!dateStr) return "";
     let p = dateStr.split("/");
     return p[2] + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0');
 }
 
-// thêm
 function them() {
     let ten = document.getElementById("ten").value;
     if (!ten) return alert("Nhập tên!");
@@ -126,9 +117,7 @@ function them() {
     clearForm();
 }
 
-// hiển thị
-
-    function hienThi(data = ds) {
+function hienThi(data = ds) {
     let html = "";
     let today = new Date();
 
@@ -137,15 +126,12 @@ function them() {
 
         if (p.ngaytaikham) {
             let parts = p.ngaytaikham.split("/");
-            let ngayTaiKham = new Date(parts[2], parts[1] - 1, parts[0]);
+            let d = new Date(parts[2], parts[1] - 1, parts[0]);
 
-            let diff = (ngayTaiKham - today) / (1000 * 60 * 60 * 24);
+            let diff = Math.floor((d - today) / (1000*60*60*24));
 
-            if (diff < 0) {
-                mau = "background-color:#ffcccc"; // quá hạn (đỏ)
-            } else if (diff <= 3) {
-                mau = "background-color:#fff3cd"; // sắp tới (vàng)
-            }
+            if (diff < 0) mau = "background:#ffcccc";
+            else if (diff <= 3) mau = "background:#fff3cd";
         }
 
         html += `
@@ -165,9 +151,7 @@ function them() {
 
     document.getElementById("dulieu").innerHTML = html;
 }
-}
 
-// chọn để sửa
 function chon(index) {
     let p = ds[index];
 
@@ -181,7 +165,6 @@ function chon(index) {
     indexDangSua = index;
 }
 
-// cập nhật
 function capNhat() {
     if (indexDangSua === -1) return alert("Chọn bệnh nhân cần sửa!");
 
@@ -199,7 +182,6 @@ function capNhat() {
     indexDangSua = -1;
 }
 
-// xóa
 function xoa(index) {
     if (confirm("Xóa bệnh nhân này?")) {
         ds.splice(index, 1);
@@ -207,7 +189,6 @@ function xoa(index) {
     }
 }
 
-// lọc
 function loc() {
     let key = document.getElementById("timkiem").value.toLowerCase();
 
@@ -221,7 +202,6 @@ function loc() {
     hienThi(filtered);
 }
 
-// clear form
 function clearForm() {
     document.getElementById("ten").value = "";
     document.getElementById("namsinh").value = "";
@@ -231,7 +211,6 @@ function clearForm() {
     document.getElementById("ngaytaikham").value = "";
 }
 
-// xuất excel
 function xuatExcel() {
     let table = document.getElementById("bangdulieu");
     let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
