@@ -1,140 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Quản lý bệnh nhân</title>
+<meta charset="UTF-8">
+<title>Quản lý bệnh nhân</title>
+
+<!-- Thư viện Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 20px;
+}
+
+input, button {
+    padding: 6px;
+    margin: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background: #f2f2f2;
+}
+
+.container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+</style>
 </head>
+
 <body>
 
 <h2>Quản lý bệnh nhân</h2>
 
-<input id="ten" placeholder="Họ tên">
-<input id="namsinh" type="number" placeholder="Năm sinh">
-<input id="nha" placeholder="Nhà">
-<input id="thuoc" placeholder="Thuốc dùng">
-<input id="ngaykham" type="date">
-<input id="taikham" type="date">
+<!-- Form nhập -->
+<input type="text" id="ten" placeholder="Họ tên">
+<input type="number" id="namsinh" placeholder="Năm sinh">
+<input type="text" id="thuoc" placeholder="Thuốc dùng">
+<input type="date" id="ngay">
 
 <button onclick="them()">Thêm</button>
-<button onclick="capNhat()" id="btnUpdate" style="display:none;">Cập nhật</button>
+<button onclick="xuatExcel()">Xuất Excel</button>
 
-<hr>
+<br>
 
-<input id="locTen" placeholder="Lọc tên" oninput="hienThi()">
-<input id="locNha" placeholder="Lọc nhà" oninput="hienThi()">
-<input id="locThuoc" placeholder="Lọc thuốc" oninput="hienThi()">
-<input id="locNgay" type="date" oninput="hienThi()">
+<input type="text" id="timkiem" placeholder="Lọc tên..." onkeyup="locTen()">
 
-<h3>Danh sách</h3>
-
-<table border="1">
-<tr>
-<th>STT</th>
-<th>Họ tên</th>
-<th>Năm sinh</th>
-<th>Nhà</th>
-<th>Thuốc</th>
-<th>Ngày khám</th>
-<th>Tái khám</th>
-<th>Hành động</th>
-</tr>
-<tbody id="bang"></tbody>
+<!-- Bảng -->
+<div class="container">
+<table id="bangdulieu">
+    <thead>
+        <tr>
+            <th>Họ tên</th>
+            <th>Năm sinh</th>
+            <th>Thuốc</th>
+            <th>Ngày khám</th>
+        </tr>
+    </thead>
+    <tbody id="dulieu"></tbody>
 </table>
+</div>
 
 <script>
-let danhSach = JSON.parse(localStorage.getItem("ds")) || [];
-let dangSua = -1;
+// Lưu dữ liệu
+let ds = [];
 
-function luu() {
-    localStorage.setItem("ds", JSON.stringify(danhSach));
+// Định dạng ngày VN
+function formatDateVN(dateStr) {
+    if (!dateStr) return "";
+    let d = new Date(dateStr);
+    return d.toLocaleDateString('vi-VN');
 }
 
-function layDuLieu() {
-    return {
-        ten: document.getElementById("ten").value,
-        namsinh: document.getElementById("namsinh").value,
-        nha: document.getElementById("nha").value,
-        thuoc: document.getElementById("thuoc").value,
-        ngaykham: document.getElementById("ngaykham").value,
-        taikham: document.getElementById("taikham").value
-    };
-}
-
+// Thêm bệnh nhân
 function them() {
-    let bn = layDuLieu();
-    danhSach.push(bn);
-    luu();
+    let ten = document.getElementById("ten").value;
+    let namsinh = document.getElementById("namsinh").value;
+    let thuoc = document.getElementById("thuoc").value;
+    let ngay = document.getElementById("ngay").value;
+
+    let ngayVN = formatDateVN(ngay);
+
+    if (!ten) {
+        alert("Nhập tên!");
+        return;
+    }
+
+    ds.push({ ten, namsinh, thuoc, ngay: ngayVN });
+
     hienThi();
 }
 
+// Hiển thị bảng
 function hienThi() {
     let html = "";
-    let homNay = new Date();
-
-    for (let i = 0; i < danhSach.length; i++) {
-        let bn = danhSach[i];
-
-        // lọc
-        if (locTen.value && !bn.ten.toLowerCase().includes(locTen.value.toLowerCase())) continue;
-        if (locNha.value && !bn.nha.toLowerCase().includes(locNha.value.toLowerCase())) continue;
-        if (locThuoc.value && !bn.thuoc.toLowerCase().includes(locThuoc.value.toLowerCase())) continue;
-        if (locNgay.value && bn.taikham !== locNgay.value) continue;
-
-        // nhắc lịch
-        let canhBao = "";
-        if (bn.taikham) {
-            let tk = new Date(bn.taikham);
-            let diff = (tk - homNay) / (1000*60*60*24);
-            if (diff <= 1 && diff >= 0) canhBao = "🔔";
-        }
-
-        html += `<tr>
-        <td>${i+1}</td>
-        <td>${bn.ten}</td>
-        <td>${bn.namsinh}</td>
-        <td>${bn.nha}</td>
-        <td>${bn.thuoc}</td>
-        <td>${bn.ngaykham}</td>
-        <td>${bn.taikham} ${canhBao}</td>
-        <td>
-            <button onclick="sua(${i})">Sửa</button>
-            <button onclick="xoa(${i})">Xóa</button>
-        </td>
+    ds.forEach(p => {
+        html += `
+        <tr>
+            <td>${p.ten}</td>
+            <td>${p.namsinh}</td>
+            <td>${p.thuoc}</td>
+            <td>${p.ngay}</td>
         </tr>`;
-    }
+    });
 
-    document.getElementById("bang").innerHTML = html;
+    document.getElementById("dulieu").innerHTML = html;
 }
 
-function xoa(i) {
-    if (confirm("Xóa bệnh nhân?")) {
-        danhSach.splice(i,1);
-        luu();
-        hienThi();
-    }
+// Lọc tên
+function locTen() {
+    let keyword = document.getElementById("timkiem").value.toLowerCase();
+
+    let html = "";
+    ds.filter(p => p.ten.toLowerCase().includes(keyword))
+      .forEach(p => {
+        html += `
+        <tr>
+            <td>${p.ten}</td>
+            <td>${p.namsinh}</td>
+            <td>${p.thuoc}</td>
+            <td>${p.ngay}</td>
+        </tr>`;
+    });
+
+    document.getElementById("dulieu").innerHTML = html;
 }
 
-function sua(i) {
-    let bn = danhSach[i];
-    ten.value = bn.ten;
-    namsinh.value = bn.namsinh;
-    nha.value = bn.nha;
-    thuoc.value = bn.thuoc;
-    ngaykham.value = bn.ngaykham;
-    taikham.value = bn.taikham;
-
-    dangSua = i;
-    btnUpdate.style.display = "inline";
+// Xuất Excel
+function xuatExcel() {
+    let table = document.getElementById("bangdulieu");
+    let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
+    XLSX.writeFile(wb, "benhnhan.xlsx");
 }
-
-function capNhat() {
-    danhSach[dangSua] = layDuLieu();
-    dangSua = -1;
-    btnUpdate.style.display = "none";
-    luu();
-    hienThi();
-}
-
-hienThi();
 </script>
 
 </body>
