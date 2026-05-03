@@ -1,68 +1,7 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title>Quản lý bệnh nhân</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<style>
-body { font-family: Arial; padding: 20px; }
-input, button { padding: 6px; margin: 5px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 8px; }
-th { position: sticky; top: 0; background: #f2f2f2; }
-.container { max-height: 400px; overflow-y: auto; }
-button.small { padding: 4px 8px; }
-</style>
-</head>
-
-<body>
-
-<h2>Quản lý bệnh nhân</h2>
-
-<input type="text" id="ten" placeholder="Họ tên">
-<input type="number" id="namsinh" placeholder="Năm sinh">
-<input type="text" id="nha" placeholder="Nhà">
-<input type="text" id="thuoc" placeholder="Thuốc dùng">
-
-<br>
-
-Ngày khám: <input type="date" id="ngaykham">
-Ngày tái khám: <input type="date" id="ngaytaikham">
-
-<br>
-
-<button onclick="them()">Thêm</button>
-<button onclick="capNhat()">Cập nhật</button>
-<button onclick="xuatExcel()">Xuất Excel</button>
-
-<br>
-
-<input type="text" id="timkiem" placeholder="Tìm kiếm..." onkeyup="loc()">
-
-<div class="container">
-<table>
-<thead>
-<tr>
-<th>Họ tên</th>
-<th>Năm sinh</th>
-<th>Nhà</th>
-<th>Thuốc</th>
-<th>Ngày khám</th>
-<th>Ngày tái khám</th>
-<th>Hành động</th>
-</tr>
-</thead>
-<tbody id="dulieu"></tbody>
-</table>
-</div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// 🔥 CONFIG CỦA BẠN (ĐÃ GẮN)
 const firebaseConfig = {
   apiKey: "AIzaSyDaWhoXqZGx-DLbwEJYFghlL2FyiJrLjOA",
   authDomain: "ql-benhnhan.firebaseapp.com",
@@ -88,16 +27,25 @@ async function loadData() {
     hienThi(ds);
 }
 
-// THÊM
+// THÊM (ĐÃ FIX)
 window.them = async function() {
-    let ten = document.getElementById("ten").value;
-    if (!ten) return alert("Nhập tên!");
+    try {
+        let ten = document.getElementById("ten").value;
+        if (!ten) return alert("Nhập tên!");
 
-    let data = layDuLieuForm();
-    await addDoc(collection(db, "benhnhan"), data);
+        let data = layDuLieuForm();
 
-    clearForm();
-    loadData();
+        await addDoc(collection(db, "benhnhan"), data);
+
+        alert("✅ Đã lưu lên Firebase");
+
+        clearForm();
+        loadData();
+
+    } catch (e) {
+        alert("❌ Lỗi: " + e.message);
+        console.error(e);
+    }
 }
 
 // LẤY DATA
@@ -115,81 +63,18 @@ function layDuLieuForm() {
 // HIỂN THỊ
 function hienThi(data) {
     let html = "";
-    let today = new Date();
-    today.setHours(0,0,0,0);
-
     data.forEach(p => {
-        let mau = "";
-        if (p.ngaytaikham) {
-            let d = new Date(p.ngaytaikham);
-            d.setHours(0,0,0,0);
-            let diff = Math.floor((d - today) / (1000*60*60*24));
-            if (diff < 0) mau = "background:#ffcccc";
-            else if (diff <= 3) mau = "background:#fff3cd";
-        }
-
         html += `
-        <tr style="${mau}">
+        <tr>
             <td>${p.ten}</td>
             <td>${p.namsinh}</td>
             <td>${p.nha}</td>
             <td>${p.thuoc}</td>
-            <td>${formatDate(p.ngaykham)}</td>
-            <td>${formatDate(p.ngaytaikham)}</td>
-            <td>
-                <button class="small" onclick="sua('${p.id}')">Sửa</button>
-                <button class="small" onclick="xoa('${p.id}')">Xoá</button>
-            </td>
+            <td>${p.ngaykham}</td>
+            <td>${p.ngaytaikham}</td>
         </tr>`;
     });
-
     document.getElementById("dulieu").innerHTML = html;
-}
-
-// FORMAT
-function formatDate(dateStr) {
-    if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString('vi-VN');
-}
-
-// XOÁ
-window.xoa = async function(id) {
-    if (!confirm("Xoá bệnh nhân?")) return;
-    await deleteDoc(doc(db, "benhnhan", id));
-    loadData();
-}
-
-// SỬA
-window.sua = function(id) {
-    let p = ds.find(x => x.id === id);
-    document.getElementById("ten").value = p.ten;
-    document.getElementById("namsinh").value = p.namsinh;
-    document.getElementById("nha").value = p.nha;
-    document.getElementById("thuoc").value = p.thuoc;
-    document.getElementById("ngaykham").value = p.ngaykham;
-    document.getElementById("ngaytaikham").value = p.ngaytaikham;
-    idDangSua = id;
-}
-
-// CẬP NHẬT
-window.capNhat = async function() {
-    if (!idDangSua) return alert("Chọn bệnh nhân để sửa");
-    let data = layDuLieuForm();
-    await updateDoc(doc(db, "benhnhan", idDangSua), data);
-    idDangSua = null;
-    clearForm();
-    loadData();
-}
-
-// LỌC
-window.loc = function() {
-    let key = document.getElementById("timkiem").value.toLowerCase();
-    let filtered = ds.filter(p =>
-        (p.ten || "").toLowerCase().includes(key) ||
-        (p.nha || "").toLowerCase().includes(key) ||
-        (p.thuoc || "").toLowerCase().includes(key)
-    );
-    hienThi(filtered);
 }
 
 // CLEAR
@@ -197,27 +82,7 @@ function clearForm() {
     document.querySelectorAll("input").forEach(i => i.value = "");
 }
 
-// EXCEL
-window.xuatExcel = function() {
-    let data = ds.map(p => ({
-        "Họ tên": p.ten,
-        "Năm sinh": p.namsinh,
-        "Nhà": p.nha,
-        "Thuốc": p.thuoc,
-        "Ngày khám": formatDate(p.ngaykham),
-        "Ngày tái khám": formatDate(p.ngaytaikham)
-    }));
-
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
-    XLSX.writeFile(wb, "benhnhan.xlsx");
-}
-
 // AUTO LOAD
 window.onload = loadData;
 
 </script>
-
-</body>
-</html>
