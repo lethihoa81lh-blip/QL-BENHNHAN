@@ -127,11 +127,29 @@ function them() {
 }
 
 // hiển thị
-function hienThi(data = ds) {
+
+    function hienThi(data = ds) {
     let html = "";
+    let today = new Date();
+
     data.forEach((p, index) => {
+        let mau = "";
+
+        if (p.ngaytaikham) {
+            let parts = p.ngaytaikham.split("/");
+            let ngayTaiKham = new Date(parts[2], parts[1] - 1, parts[0]);
+
+            let diff = (ngayTaiKham - today) / (1000 * 60 * 60 * 24);
+
+            if (diff < 0) {
+                mau = "background-color:#ffcccc"; // quá hạn (đỏ)
+            } else if (diff <= 3) {
+                mau = "background-color:#fff3cd"; // sắp tới (vàng)
+            }
+        }
+
         html += `
-        <tr>
+        <tr style="${mau}">
             <td>${p.ten}</td>
             <td>${p.namsinh}</td>
             <td>${p.nha}</td>
@@ -146,6 +164,7 @@ function hienThi(data = ds) {
     });
 
     document.getElementById("dulieu").innerHTML = html;
+}
 }
 
 // chọn để sửa
