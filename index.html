@@ -65,7 +65,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <br>
 
-<input type="text" id="timkiem" placeholder="Lọc..." onkeyup="loc()">
+<input type="text" id="timkiem" placeholder="Lọc theo tên / nhà / thuốc / ngày..." onkeyup="loc()">
 
 <div class="container">
 <table id="bangdulieu">
@@ -85,21 +85,30 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 </div>
 
 <script>
-let ds = [];
+
+let ds = JSON.parse(localStorage.getItem("ds_benhnhan")) || [];
 let indexDangSua = -1;
 
+// ===== LƯU =====
+function luu() {
+    localStorage.setItem("ds_benhnhan", JSON.stringify(ds));
+}
+
+// ===== FORMAT DATE =====
 function formatDateVN(dateStr) {
     if (!dateStr) return "";
     let d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN');
 }
 
+// ===== INPUT DATE =====
 function toInputDate(dateStr) {
     if (!dateStr) return "";
     let p = dateStr.split("/");
     return p[2] + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0');
 }
 
+// ===== THÊM =====
 function them() {
     let ten = document.getElementById("ten").value;
     if (!ten) return alert("Nhập tên!");
@@ -113,20 +122,27 @@ function them() {
         ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
     });
 
+    luu();
     hienThi();
     clearForm();
 }
 
+// ===== HIỂN THỊ =====
 function hienThi(data = ds) {
     let html = "";
     let today = new Date();
+    today.setHours(0,0,0,0);
 
-    data.forEach((p, index) => {
+    data.forEach((p) => {
+
+        let index = ds.indexOf(p); // fix lỗi khi lọc
+
         let mau = "";
 
         if (p.ngaytaikham) {
             let parts = p.ngaytaikham.split("/");
             let d = new Date(parts[2], parts[1] - 1, parts[0]);
+            d.setHours(0,0,0,0);
 
             let diff = Math.floor((d - today) / (1000*60*60*24));
 
@@ -152,6 +168,7 @@ function hienThi(data = ds) {
     document.getElementById("dulieu").innerHTML = html;
 }
 
+// ===== CHỌN SỬA =====
 function chon(index) {
     let p = ds[index];
 
@@ -165,6 +182,7 @@ function chon(index) {
     indexDangSua = index;
 }
 
+// ===== CẬP NHẬT =====
 function capNhat() {
     if (indexDangSua === -1) return alert("Chọn bệnh nhân cần sửa!");
 
@@ -177,18 +195,22 @@ function capNhat() {
         ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
     };
 
+    luu();
     hienThi();
     clearForm();
     indexDangSua = -1;
 }
 
+// ===== XOÁ =====
 function xoa(index) {
     if (confirm("Xóa bệnh nhân này?")) {
         ds.splice(index, 1);
+        luu();
         hienThi();
     }
 }
 
+// ===== LỌC =====
 function loc() {
     let key = document.getElementById("timkiem").value.toLowerCase();
 
@@ -202,6 +224,7 @@ function loc() {
     hienThi(filtered);
 }
 
+// ===== RESET FORM =====
 function clearForm() {
     document.getElementById("ten").value = "";
     document.getElementById("namsinh").value = "";
@@ -211,11 +234,18 @@ function clearForm() {
     document.getElementById("ngaytaikham").value = "";
 }
 
+// ===== EXCEL =====
 function xuatExcel() {
     let table = document.getElementById("bangdulieu");
     let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
     XLSX.writeFile(wb, "benhnhan.xlsx");
 }
+
+// ===== LOAD =====
+window.onload = function () {
+    hienThi();
+};
+
 </script>
 
 </body>
