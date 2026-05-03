@@ -83,7 +83,15 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <tbody id="dulieu"></tbody>
 </table>
 </div>
-
+<tr>
+    <th><input oninput="locCot()" placeholder="Lọc tên"></th>
+    <th><input oninput="locCot()" placeholder="Lọc năm sinh"></th>
+    <th><input oninput="locCot()" placeholder="Lọc nhà"></th>
+    <th><input oninput="locCot()" placeholder="Lọc thuốc"></th>
+    <th></th>
+    <th><input oninput="locCot()" placeholder="Lọc tái khám"></th>
+    <th></th>
+</tr>
 <script>
 
 let ds = JSON.parse(localStorage.getItem("ds_benhnhan")) || [];
@@ -240,7 +248,25 @@ function xuatExcel() {
     let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
     XLSX.writeFile(wb, "benhnhan.xlsx");
 }
+function locCot() {
+    let inputs = document.querySelectorAll("thead input");
 
+    let fTen = inputs[0].value.toLowerCase();
+    let fNam = inputs[1].value.toLowerCase();
+    let fNha = inputs[2].value.toLowerCase();
+    let fThuoc = inputs[3].value.toLowerCase();
+    let fTK = inputs[4].value.toLowerCase();
+
+    let filtered = ds.filter(p =>
+        (!fTen || (p.ten && p.ten.toLowerCase().includes(fTen))) &&
+        (!fNam || (p.namsinh && p.namsinh.toString().includes(fNam))) &&
+        (!fNha || (p.nha && p.nha.toLowerCase().includes(fNha))) &&
+        (!fThuoc || (p.thuoc && p.thuoc.toLowerCase().includes(fThuoc))) &&
+        (!fTK || (p.ngaytaikham && p.ngaytaikham.toLowerCase().includes(fTK)))
+    );
+
+    hienThi(filtered);
+}
 // ===== LOAD =====
 window.onload = function () {
     hienThi();
