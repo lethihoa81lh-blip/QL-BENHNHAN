@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý bệnh nhân tâm thần</title>
+</head>
+<body>
+
+<h2>Quản lý bệnh nhân</h2>
+
+<!-- NHẬP -->
+<input id="ten" placeholder="Họ tên">
+<input id="namsinh" type="number" placeholder="Năm sinh">
+<input id="nha" placeholder="Nhà">
+<input id="thuoc" placeholder="Thuốc dùng">
+<input id="ngaykham" type="date">
+<input id="taikham" type="date">
+
+<button onclick="them()">Thêm</button>
+<button onclick="capNhat()" id="btnUpdate" style="display:none;">Cập nhật</button>
+
+<hr>
+
+<!-- LỌC -->
+<input id="locTen" placeholder="Lọc tên" oninput="hienThi()">
+<input id="locNha" placeholder="Lọc nhà" oninput="hienThi()">
+<input id="locThuoc" placeholder="Lọc thuốc" oninput="hienThi()">
+<input id="locNgay" type="date" oninput="hienThi()">
+
+<h3>Danh sách</h3>
+
+<table border="1">
+<tr>
+<th>STT</th>
+<th>Họ tên</th>
+<th>Năm sinh</th>
+<th>Nhà</th>
+<th>Thuốc</th>
+<th>Ngày khám</th>
+<th>Tái khám</th>
+<th>Hành động</th>
+</tr>
+<tbody id="ds"></tbody>
+</table>
+
+<script>
+let ds = JSON.parse(localStorage.getItem("ds")) || [];
+let dangSua = -1;
+
+function luu() {
+    localStorage.setItem("ds", JSON.stringify(ds));
+}
+
+function them() {
+    let bn = layDuLieu();
+    ds.push(bn);
+    luu();
+    hienThi();
+}
+
+function layDuLieu() {
+    return {
+        ten: ten.value,
+        namsinh: namsinh.value,
+        nha: nha.value,
+        thuoc: thuoc.value,
+        ngaykham: ngaykham.value,
+        taikham: taikham.value
+    };
+}
+
+function hienThi() {
+    let html = "";
+    let homNay = new Date();
+
+    for (let i = 0; i < ds.length; i++) {
+        let bn = ds[i];
+
+        // LỌC
+        if (locTen.value && !bn.ten.toLowerCase().includes(locTen.value.toLowerCase())) continue;
+        if (locNha.value && !bn.nha.toLowerCase().includes(locNha.value.toLowerCase())) continue;
+        if (locThuoc.value && !bn.thuoc.toLowerCase().includes(locThuoc.value.toLowerCase())) continue;
+        if (locNgay.value && bn.taikham !== locNgay.value) continue;
+
+        // NHẮC LỊCH
+        let canhBao = "";
+        if (bn.taikham) {
+            let tk = new Date(bn.taikham);
+            let diff = (tk - homNay) / (1000*60*60*24);
+            if (diff <= 1 && diff >= 0) {
+                canhBao = "🔔";
+            }
+        }
+
+        html += `<tr>
+        <td>${i+1}</td>
+        <td>${bn.ten}</td>
+        <td>${bn.namsinh}</td>
+        <td>${bn.nha}</td>
+        <td>${bn.thuoc}</td>
+        <td>${bn.ngaykham}</td>
+        <td>${bn.taikham} ${canhBao}</td>
+        <td>
+            <button onclick="sua(${i})">Sửa</button>
+            <button onclick="xoa(${i})">Xóa</button>
+        </td>
+        </tr>`;
+    }
+
+    ds.innerHTML = html;
+}
+
+function xoa(i) {
+    if (confirm("Xóa bệnh nhân?")) {
+        ds.splice(i,1);
+        luu();
+        hienThi();
+    }
+}
+
+function sua(i) {
+    let bn = ds[i];
+    ten.value = bn.ten;
+    namsinh.value = bn.namsinh;
+    nha.value = bn.nha;
+    thuoc.value = bn.thuoc;
+    ngaykham.value = bn.ngaykham;
+    taikham.value = bn.taikham;
+
+    dangSua = i;
+    btnUpdate.style.display = "inline";
+}
+
+function capNhat() {
+    ds[dangSua] = layDuLieu();
+    dangSua = -1;
+    btnUpdate.style.display = "none";
+    luu();
+    hienThi();
+}
+
+hienThi();
+</script>
+
+</body>
+</html>
