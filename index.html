@@ -4,14 +4,10 @@
 <meta charset="UTF-8">
 <title>Quản lý bệnh nhân</title>
 
-<!-- Thư viện Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    padding: 20px;
-}
+body { font-family: Arial; padding: 20px; }
 
 input, button {
     padding: 6px;
@@ -21,13 +17,11 @@ input, button {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
 }
 
 th, td {
     border: 1px solid #ccc;
     padding: 8px;
-    text-align: left;
 }
 
 th {
@@ -47,100 +41,103 @@ th {
 
 <h2>Quản lý bệnh nhân</h2>
 
-<!-- Form nhập -->
+<!-- FORM -->
 <input type="text" id="ten" placeholder="Họ tên">
 <input type="number" id="namsinh" placeholder="Năm sinh">
+<input type="text" id="nha" placeholder="Nhà">
 <input type="text" id="thuoc" placeholder="Thuốc dùng">
-<input type="date" id="ngay">
+
+<br>
+
+Ngày khám: <input type="date" id="ngaykham">
+Ngày tái khám: <input type="date" id="ngaytaikham">
+
+<br>
 
 <button onclick="them()">Thêm</button>
 <button onclick="xuatExcel()">Xuất Excel</button>
 
 <br>
 
-<input type="text" id="timkiem" placeholder="Lọc tên..." onkeyup="locTen()">
+<input type="text" id="timkiem" placeholder="Lọc tên hoặc nhà..." onkeyup="loc()">
 
-<!-- Bảng -->
+<!-- BẢNG -->
 <div class="container">
 <table id="bangdulieu">
-    <thead>
-        <tr>
-            <th>Họ tên</th>
-            <th>Năm sinh</th>
-            <th>Thuốc</th>
-            <th>Ngày khám</th>
-        </tr>
-    </thead>
-    <tbody id="dulieu"></tbody>
+<thead>
+<tr>
+<th>Họ tên</th>
+<th>Năm sinh</th>
+<th>Nhà</th>
+<th>Thuốc</th>
+<th>Ngày khám</th>
+<th>Ngày tái khám</th>
+</tr>
+</thead>
+<tbody id="dulieu"></tbody>
 </table>
 </div>
 
 <script>
-// Lưu dữ liệu
 let ds = [];
 
-// Định dạng ngày VN
+// format ngày VN
 function formatDateVN(dateStr) {
     if (!dateStr) return "";
     let d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN');
 }
 
-// Thêm bệnh nhân
+// thêm bệnh nhân
 function them() {
     let ten = document.getElementById("ten").value;
     let namsinh = document.getElementById("namsinh").value;
+    let nha = document.getElementById("nha").value;
     let thuoc = document.getElementById("thuoc").value;
-    let ngay = document.getElementById("ngay").value;
-
-    let ngayVN = formatDateVN(ngay);
+    let ngaykham = formatDateVN(document.getElementById("ngaykham").value);
+    let ngaytaikham = formatDateVN(document.getElementById("ngaytaikham").value);
 
     if (!ten) {
         alert("Nhập tên!");
         return;
     }
 
-    ds.push({ ten, namsinh, thuoc, ngay: ngayVN });
+    ds.push({ ten, namsinh, nha, thuoc, ngaykham, ngaytaikham });
 
     hienThi();
 }
 
-// Hiển thị bảng
-function hienThi() {
+// hiển thị
+function hienThi(data = ds) {
     let html = "";
-    ds.forEach(p => {
+    data.forEach(p => {
         html += `
         <tr>
             <td>${p.ten}</td>
             <td>${p.namsinh}</td>
+            <td>${p.nha}</td>
             <td>${p.thuoc}</td>
-            <td>${p.ngay}</td>
+            <td>${p.ngaykham}</td>
+            <td>${p.ngaytaikham}</td>
         </tr>`;
     });
 
     document.getElementById("dulieu").innerHTML = html;
 }
 
-// Lọc tên
-function locTen() {
-    let keyword = document.getElementById("timkiem").value.toLowerCase();
+// lọc
+function loc() {
+    let key = document.getElementById("timkiem").value.toLowerCase();
 
-    let html = "";
-    ds.filter(p => p.ten.toLowerCase().includes(keyword))
-      .forEach(p => {
-        html += `
-        <tr>
-            <td>${p.ten}</td>
-            <td>${p.namsinh}</td>
-            <td>${p.thuoc}</td>
-            <td>${p.ngay}</td>
-        </tr>`;
-    });
+    let filtered = ds.filter(p =>
+        p.ten.toLowerCase().includes(key) ||
+        p.nha.toLowerCase().includes(key)
+    );
 
-    document.getElementById("dulieu").innerHTML = html;
+    hienThi(filtered);
 }
 
-// Xuất Excel
+// xuất excel
 function xuatExcel() {
     let table = document.getElementById("bangdulieu");
     let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
