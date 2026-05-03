@@ -34,6 +34,11 @@ th {
     max-height: 400px;
     overflow-y: auto;
 }
+
+tr:hover {
+    background: #eef;
+    cursor: pointer;
+}
 </style>
 </head>
 
@@ -55,6 +60,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <br>
 
 <button onclick="them()">Thêm</button>
+<button onclick="capNhat()">Cập nhật</button>
 <button onclick="xuatExcel()">Xuất Excel</button>
 
 <br>
@@ -80,12 +86,20 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <script>
 let ds = [];
+let indexDangSua = -1;
 
-// format ngày VN
+// format ngày hiển thị
 function formatDateVN(dateStr) {
     if (!dateStr) return "";
     let d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN');
+}
+
+// chuyển ngược lại cho input date
+function toInputDate(dateStr) {
+    if (!dateStr) return "";
+    let parts = dateStr.split("/");
+    return parts[2] + "-" + parts[1].padStart(2, '0') + "-" + parts[0].padStart(2, '0');
 }
 
 // thêm bệnh nhân
@@ -94,25 +108,34 @@ function them() {
     let namsinh = document.getElementById("namsinh").value;
     let nha = document.getElementById("nha").value;
     let thuoc = document.getElementById("thuoc").value;
-    let ngaykham = formatDateVN(document.getElementById("ngaykham").value);
-    let ngaytaikham = formatDateVN(document.getElementById("ngaytaikham").value);
+
+    let ngaykhamRaw = document.getElementById("ngaykham").value;
+    let ngaytaikhamRaw = document.getElementById("ngaytaikham").value;
 
     if (!ten) {
         alert("Nhập tên!");
         return;
     }
 
-    ds.push({ ten, namsinh, nha, thuoc, ngaykham, ngaytaikham });
+    ds.push({
+        ten,
+        namsinh,
+        nha,
+        thuoc,
+        ngaykham: formatDateVN(ngaykhamRaw),
+        ngaytaikham: formatDateVN(ngaytaikhamRaw)
+    });
 
     hienThi();
+    clearForm();
 }
 
 // hiển thị
 function hienThi(data = ds) {
     let html = "";
-    data.forEach(p => {
+    data.forEach((p, index) => {
         html += `
-        <tr>
+        <tr onclick="chon(${index})">
             <td>${p.ten}</td>
             <td>${p.namsinh}</td>
             <td>${p.nha}</td>
@@ -123,6 +146,52 @@ function hienThi(data = ds) {
     });
 
     document.getElementById("dulieu").innerHTML = html;
+}
+
+// chọn dòng để sửa
+function chon(index) {
+    let p = ds[index];
+
+    document.getElementById("ten").value = p.ten;
+    document.getElementById("namsinh").value = p.namsinh;
+    document.getElementById("nha").value = p.nha;
+    document.getElementById("thuoc").value = p.thuoc;
+
+    document.getElementById("ngaykham").value = toInputDate(p.ngaykham);
+    document.getElementById("ngaytaikham").value = toInputDate(p.ngaytaikham);
+
+    indexDangSua = index;
+}
+
+// cập nhật
+function capNhat() {
+    if (indexDangSua === -1) {
+        alert("Chọn bệnh nhân cần sửa!");
+        return;
+    }
+
+    ds[indexDangSua] = {
+        ten: document.getElementById("ten").value,
+        namsinh: document.getElementById("namsinh").value,
+        nha: document.getElementById("nha").value,
+        thuoc: document.getElementById("thuoc").value,
+        ngaykham: formatDateVN(document.getElementById("ngaykham").value),
+        ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
+    };
+
+    hienThi();
+    indexDangSua = -1;
+    clearForm();
+}
+
+// xóa form
+function clearForm() {
+    document.getElementById("ten").value = "";
+    document.getElementById("namsinh").value = "";
+    document.getElementById("nha").value = "";
+    document.getElementById("thuoc").value = "";
+    document.getElementById("ngaykham").value = "";
+    document.getElementById("ngaytaikham").value = "";
 }
 
 // lọc nâng cao
