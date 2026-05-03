@@ -12,7 +12,7 @@ input, button { padding: 6px; margin: 5px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #ccc; padding: 8px; }
 th { background: #f2f2f2; }
-.container { max-height: 400px; overflow-y: auto; }
+.container { max-height: 420px; overflow-y: auto; }
 </style>
 </head>
 
@@ -20,15 +20,15 @@ th { background: #f2f2f2; }
 
 <h2>Quản lý bệnh nhân</h2>
 
+<!-- FORM -->
 <input id="ten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
-<input id="thuoc" placeholder="Thuốc">
 
-<br>
+<input id="chandoan1" placeholder="Chẩn đoán 1">
+<input id="chandoan2" placeholder="Chẩn đoán 2">
 
-Ngày khám: <input type="date" id="ngaykham">
-Ngày tái khám: <input type="date" id="ngaytaikham">
+<input id="bhyt" placeholder="Số thẻ BHYT">
 
 <br>
 
@@ -36,6 +36,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <button onclick="capNhat()">Cập nhật</button>
 <button onclick="xuatExcel()">Xuất Excel</button>
 
+<!-- TABLE -->
 <div class="container">
 <table>
 <thead>
@@ -43,12 +44,13 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <th>Họ tên<br><input id="locTen" onkeyup="locCot()"></th>
 <th>Năm sinh<br><input id="locNam" onkeyup="locCot()"></th>
 <th>Nhà<br><input id="locNha" onkeyup="locCot()"></th>
-<th>Thuốc<br><input id="locThuoc" onkeyup="locCot()"></th>
-<th>Ngày khám</th>
-<th>Ngày tái khám</th>
+<th>Chẩn đoán 1<br><input id="locCD1" onkeyup="locCot()"></th>
+<th>Chẩn đoán 2</th>
+<th>BHYT<br><input id="locBHYT" onkeyup="locCot()"></th>
 <th>Hành động</th>
 </tr>
 </thead>
+
 <tbody id="dulieu"></tbody>
 </table>
 </div>
@@ -72,7 +74,7 @@ const db = getFirestore(app);
 let ds = [];
 let idDangSua = null;
 
-// LOAD DATA
+/* LOAD */
 async function loadData() {
     const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
@@ -80,53 +82,39 @@ async function loadData() {
     hienThi(ds);
 }
 
-// LẤY DỮ LIỆU FORM
+/* GET DATA */
 function layData() {
     return {
-        ten: document.getElementById("ten").value,
-        namsinh: document.getElementById("namsinh").value,
-        nha: document.getElementById("nha").value,
-        thuoc: document.getElementById("thuoc").value,
-        ngaykham: document.getElementById("ngaykham").value,
-        ngaytaikham: document.getElementById("ngaytaikham").value
+        ten: ten.value,
+        namsinh: namsinh.value,
+        nha: nha.value,
+        chandoan1: chandoan1.value,
+        chandoan2: chandoan2.value,
+        bhyt: bhyt.value
     };
 }
 
-// THÊM
-window.them = async function() {
-    let ten = document.getElementById("ten").value;
-    if (!ten) return alert("Nhập tên!");
-
+/* THÊM */
+window.them = async function () {
+    if (!ten.value) return alert("Nhập họ tên!");
     await addDoc(collection(db, "benhnhan"), layData());
     clearForm();
     loadData();
 }
 
-// HIỂN THỊ + CẢNH BÁO
+/* HIỂN THỊ */
 function hienThi(data) {
     let html = "";
-    let today = new Date(); today.setHours(0,0,0,0);
 
     data.forEach(p => {
-        let mau = "";
-
-        if (p.ngaytaikham) {
-            let d = new Date(p.ngaytaikham);
-            d.setHours(0,0,0,0);
-            let diff = (d - today) / (1000*60*60*24);
-
-            if (diff < 0) mau = "background:#ffcccc";
-            else if (diff <= 3) mau = "background:#fff3cd";
-        }
-
         html += `
-        <tr style="${mau}">
-            <td>${p.ten}</td>
-            <td>${p.namsinh}</td>
-            <td>${p.nha}</td>
-            <td>${p.thuoc}</td>
-            <td>${formatDate(p.ngaykham)}</td>
-            <td>${formatDate(p.ngaytaikham)}</td>
+        <tr>
+            <td>${p.ten || ""}</td>
+            <td>${p.namsinh || ""}</td>
+            <td>${p.nha || ""}</td>
+            <td>${p.chandoan1 || ""}</td>
+            <td>${p.chandoan2 || ""}</td>
+            <td>${p.bhyt || ""}</td>
             <td>
                 <button onclick="sua('${p.id}')">Sửa</button>
                 <button onclick="xoa('${p.id}')">Xoá</button>
@@ -134,76 +122,80 @@ function hienThi(data) {
         </tr>`;
     });
 
-    document.getElementById("dulieu").innerHTML = html;
+    dulieu.innerHTML = html;
 }
 
-// FORMAT DATE
-function formatDate(d){
-    if(!d) return "";
-    return new Date(d).toLocaleDateString('vi-VN');
-}
-
-// XOÁ
-window.xoa = async function(id){
-    await deleteDoc(doc(db,"benhnhan",id));
+/* XOÁ */
+window.xoa = async function (id) {
+    await deleteDoc(doc(db, "benhnhan", id));
     loadData();
 }
 
-// SỬA
-window.sua = function(id){
-    let p = ds.find(x=>x.id==id);
-    document.getElementById("ten").value=p.ten;
-    document.getElementById("namsinh").value=p.namsinh;
-    document.getElementById("nha").value=p.nha;
-    document.getElementById("thuoc").value=p.thuoc;
-    document.getElementById("ngaykham").value=p.ngaykham;
-    document.getElementById("ngaytaikham").value=p.ngaytaikham;
-    idDangSua=id;
+/* SỬA */
+window.sua = function (id) {
+    let p = ds.find(x => x.id == id);
+
+    ten.value = p.ten;
+    namsinh.value = p.namsinh;
+    nha.value = p.nha;
+    chandoan1.value = p.chandoan1;
+    chandoan2.value = p.chandoan2;
+    bhyt.value = p.bhyt;
+
+    idDangSua = id;
 }
 
-// CẬP NHẬT
-window.capNhat = async function(){
-    if(!idDangSua) return alert("Chọn bệnh nhân để sửa");
-    await updateDoc(doc(db,"benhnhan",idDangSua), layData());
-    idDangSua=null;
+/* CẬP NHẬT */
+window.capNhat = async function () {
+    if (!idDangSua) return alert("Chọn bệnh nhân để sửa");
+
+    await updateDoc(doc(db, "benhnhan", idDangSua), layData());
+    idDangSua = null;
     clearForm();
     loadData();
 }
 
-// LỌC THEO CỘT
-window.locCot = function(){
+/* LỌC */
+window.locCot = function () {
     let f = ds.filter(p =>
-        (p.ten||"").toLowerCase().includes(document.getElementById("locTen").value.toLowerCase()) &&
-        (p.namsinh||"").toString().includes(document.getElementById("locNam").value) &&
-        (p.nha||"").toLowerCase().includes(document.getElementById("locNha").value.toLowerCase()) &&
-        (p.thuoc||"").toLowerCase().includes(document.getElementById("locThuoc").value.toLowerCase())
+        (p.ten || "").toLowerCase().includes(locTen.value.toLowerCase()) &&
+        (p.namsinh || "").includes(locNam.value) &&
+        (p.nha || "").toLowerCase().includes(locNha.value.toLowerCase()) &&
+        (p.chandoan1 || "").toLowerCase().includes(locCD1.value.toLowerCase()) &&
+        (p.bhyt || "").toLowerCase().includes(locBHYT.value.toLowerCase())
     );
+
     hienThi(f);
 }
 
-// CLEAR FORM
-function clearForm(){
-    document.querySelectorAll("input").forEach(i=>i.value="");
+/* CLEAR FORM */
+function clearForm() {
+    ten.value = "";
+    namsinh.value = "";
+    nha.value = "";
+    chandoan1.value = "";
+    chandoan2.value = "";
+    bhyt.value = "";
 }
 
-// XUẤT EXCEL
-window.xuatExcel=function(){
-    let data=ds.map(p=>({
-        "Tên":p.ten,
-        "Năm sinh":p.namsinh,
-        "Nhà":p.nha,
-        "Thuốc":p.thuoc,
-        "Ngày khám":formatDate(p.ngaykham),
-        "Tái khám":formatDate(p.ngaytaikham)
+/* EXCEL */
+window.xuatExcel = function () {
+    let data = ds.map(p => ({
+        "Họ tên": p.ten,
+        "Năm sinh": p.namsinh,
+        "Nhà": p.nha,
+        "Chẩn đoán 1": p.chandoan1,
+        "Chẩn đoán 2": p.chandoan2,
+        "BHYT": p.bhyt
     }));
 
-    let wb=XLSX.utils.book_new();
-    let ws=XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb,ws,"DS");
-    XLSX.writeFile(wb,"benhnhan.xlsx");
+    let wb = XLSX.utils.book_new();
+    let ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
+    XLSX.writeFile(wb, "benhnhan.xlsx");
 }
 
-// LOAD KHI MỞ WEB
+/* INIT */
 window.onload = loadData;
 
 </script>
