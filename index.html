@@ -22,6 +22,7 @@ table {
 th, td {
     border: 1px solid #ccc;
     padding: 8px;
+    text-align: left;
 }
 
 th {
@@ -37,7 +38,11 @@ th {
 
 tr:hover {
     background: #eef;
-    cursor: pointer;
+}
+
+button.small {
+    padding: 4px 8px;
+    margin: 2px;
 }
 </style>
 </head>
@@ -65,7 +70,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <br>
 
-<input type="text" id="timkiem" placeholder="Lọc: tên / nhà / thuốc / ngày tái khám..." onkeyup="loc()">
+<input type="text" id="timkiem" placeholder="Lọc..." onkeyup="loc()">
 
 <!-- BẢNG -->
 <div class="container">
@@ -78,6 +83,7 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <th>Thuốc</th>
 <th>Ngày khám</th>
 <th>Ngày tái khám</th>
+<th>Hành động</th>
 </tr>
 </thead>
 <tbody id="dulieu"></tbody>
@@ -88,42 +94,32 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 let ds = [];
 let indexDangSua = -1;
 
-// format ngày hiển thị
+// format ngày
 function formatDateVN(dateStr) {
     if (!dateStr) return "";
     let d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN');
 }
 
-// chuyển ngược lại cho input date
+// chuyển lại cho input
 function toInputDate(dateStr) {
     if (!dateStr) return "";
-    let parts = dateStr.split("/");
-    return parts[2] + "-" + parts[1].padStart(2, '0') + "-" + parts[0].padStart(2, '0');
+    let p = dateStr.split("/");
+    return p[2] + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0');
 }
 
-// thêm bệnh nhân
+// thêm
 function them() {
     let ten = document.getElementById("ten").value;
-    let namsinh = document.getElementById("namsinh").value;
-    let nha = document.getElementById("nha").value;
-    let thuoc = document.getElementById("thuoc").value;
-
-    let ngaykhamRaw = document.getElementById("ngaykham").value;
-    let ngaytaikhamRaw = document.getElementById("ngaytaikham").value;
-
-    if (!ten) {
-        alert("Nhập tên!");
-        return;
-    }
+    if (!ten) return alert("Nhập tên!");
 
     ds.push({
         ten,
-        namsinh,
-        nha,
-        thuoc,
-        ngaykham: formatDateVN(ngaykhamRaw),
-        ngaytaikham: formatDateVN(ngaytaikhamRaw)
+        namsinh: document.getElementById("namsinh").value,
+        nha: document.getElementById("nha").value,
+        thuoc: document.getElementById("thuoc").value,
+        ngaykham: formatDateVN(document.getElementById("ngaykham").value),
+        ngaytaikham: formatDateVN(document.getElementById("ngaytaikham").value)
     });
 
     hienThi();
@@ -135,20 +131,24 @@ function hienThi(data = ds) {
     let html = "";
     data.forEach((p, index) => {
         html += `
-        <tr onclick="chon(${index})">
+        <tr>
             <td>${p.ten}</td>
             <td>${p.namsinh}</td>
             <td>${p.nha}</td>
             <td>${p.thuoc}</td>
             <td>${p.ngaykham}</td>
             <td>${p.ngaytaikham}</td>
+            <td>
+                <button class="small" onclick="chon(${index})">Sửa</button>
+                <button class="small" onclick="xoa(${index})">Xóa</button>
+            </td>
         </tr>`;
     });
 
     document.getElementById("dulieu").innerHTML = html;
 }
 
-// chọn dòng để sửa
+// chọn để sửa
 function chon(index) {
     let p = ds[index];
 
@@ -156,7 +156,6 @@ function chon(index) {
     document.getElementById("namsinh").value = p.namsinh;
     document.getElementById("nha").value = p.nha;
     document.getElementById("thuoc").value = p.thuoc;
-
     document.getElementById("ngaykham").value = toInputDate(p.ngaykham);
     document.getElementById("ngaytaikham").value = toInputDate(p.ngaytaikham);
 
@@ -165,10 +164,7 @@ function chon(index) {
 
 // cập nhật
 function capNhat() {
-    if (indexDangSua === -1) {
-        alert("Chọn bệnh nhân cần sửa!");
-        return;
-    }
+    if (indexDangSua === -1) return alert("Chọn bệnh nhân cần sửa!");
 
     ds[indexDangSua] = {
         ten: document.getElementById("ten").value,
@@ -180,21 +176,19 @@ function capNhat() {
     };
 
     hienThi();
-    indexDangSua = -1;
     clearForm();
+    indexDangSua = -1;
 }
 
-// xóa form
-function clearForm() {
-    document.getElementById("ten").value = "";
-    document.getElementById("namsinh").value = "";
-    document.getElementById("nha").value = "";
-    document.getElementById("thuoc").value = "";
-    document.getElementById("ngaykham").value = "";
-    document.getElementById("ngaytaikham").value = "";
+// xóa
+function xoa(index) {
+    if (confirm("Xóa bệnh nhân này?")) {
+        ds.splice(index, 1);
+        hienThi();
+    }
 }
 
-// lọc nâng cao
+// lọc
 function loc() {
     let key = document.getElementById("timkiem").value.toLowerCase();
 
@@ -206,6 +200,16 @@ function loc() {
     );
 
     hienThi(filtered);
+}
+
+// clear form
+function clearForm() {
+    document.getElementById("ten").value = "";
+    document.getElementById("namsinh").value = "";
+    document.getElementById("nha").value = "";
+    document.getElementById("thuoc").value = "";
+    document.getElementById("ngaykham").value = "";
+    document.getElementById("ngaytaikham").value = "";
 }
 
 // xuất excel
