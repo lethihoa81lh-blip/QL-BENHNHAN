@@ -8,36 +8,12 @@
 
 <style>
 body { font-family: Arial; padding: 20px; }
-
-input, button {
-    padding: 6px;
-    margin: 5px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-}
-
-th {
-    position: sticky;
-    top: 0;
-    background: #f2f2f2;
-}
-
-.container {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-button.small {
-    padding: 4px 8px;
-}
+input, button { padding: 6px; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { position: sticky; top: 0; background: #f2f2f2; }
+.container { max-height: 400px; overflow-y: auto; }
+button.small { padding: 4px 8px; }
 </style>
 </head>
 
@@ -78,7 +54,6 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <th>Hành động</th>
 </tr>
 </thead>
-
 <tbody id="dulieu"></tbody>
 </table>
 </div>
@@ -87,13 +62,14 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// 🔥 CONFIG CỦA BẠN (ĐÃ GẮN)
 const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  projectId: "XXXX",
-  storageBucket: "XXXX",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
+  apiKey: "AIzaSyDaWhoXqZGx-DLbwEJYFghlL2FyiJrLjOA",
+  authDomain: "ql-benhnhan.firebaseapp.com",
+  projectId: "ql-benhnhan",
+  storageBucket: "ql-benhnhan.firebasestorage.app",
+  messagingSenderId: "205264705273",
+  appId: "1:205264705273:web:071eef6ee888a9a6907428"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -102,31 +78,29 @@ const db = getFirestore(app);
 let ds = [];
 let idDangSua = null;
 
-// ===== LOAD =====
+// LOAD
 async function loadData() {
     const querySnapshot = await getDocs(collection(db, "benhnhan"));
     ds = [];
-
     querySnapshot.forEach((d) => {
         ds.push({ id: d.id, ...d.data() });
     });
-
     hienThi(ds);
 }
 
-// ===== THÊM =====
+// THÊM
 window.them = async function() {
     let ten = document.getElementById("ten").value;
     if (!ten) return alert("Nhập tên!");
 
     let data = layDuLieuForm();
-
     await addDoc(collection(db, "benhnhan"), data);
+
     clearForm();
     loadData();
 }
 
-// ===== LẤY DATA =====
+// LẤY DATA
 function layDuLieuForm() {
     return {
         ten: document.getElementById("ten").value,
@@ -138,22 +112,18 @@ function layDuLieuForm() {
     };
 }
 
-// ===== HIỂN THỊ =====
+// HIỂN THỊ
 function hienThi(data) {
     let html = "";
     let today = new Date();
     today.setHours(0,0,0,0);
 
     data.forEach(p => {
-
         let mau = "";
-
         if (p.ngaytaikham) {
             let d = new Date(p.ngaytaikham);
             d.setHours(0,0,0,0);
-
             let diff = Math.floor((d - today) / (1000*60*60*24));
-
             if (diff < 0) mau = "background:#ffcccc";
             else if (diff <= 3) mau = "background:#fff3cd";
         }
@@ -176,65 +146,58 @@ function hienThi(data) {
     document.getElementById("dulieu").innerHTML = html;
 }
 
-// ===== FORMAT =====
+// FORMAT
 function formatDate(dateStr) {
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
-// ===== XOÁ =====
+// XOÁ
 window.xoa = async function(id) {
     if (!confirm("Xoá bệnh nhân?")) return;
     await deleteDoc(doc(db, "benhnhan", id));
     loadData();
 }
 
-// ===== SỬA =====
+// SỬA
 window.sua = function(id) {
     let p = ds.find(x => x.id === id);
-
     document.getElementById("ten").value = p.ten;
     document.getElementById("namsinh").value = p.namsinh;
     document.getElementById("nha").value = p.nha;
     document.getElementById("thuoc").value = p.thuoc;
     document.getElementById("ngaykham").value = p.ngaykham;
     document.getElementById("ngaytaikham").value = p.ngaytaikham;
-
     idDangSua = id;
 }
 
-// ===== CẬP NHẬT =====
+// CẬP NHẬT
 window.capNhat = async function() {
     if (!idDangSua) return alert("Chọn bệnh nhân để sửa");
-
     let data = layDuLieuForm();
-
     await updateDoc(doc(db, "benhnhan", idDangSua), data);
-
     idDangSua = null;
     clearForm();
     loadData();
 }
 
-// ===== LỌC =====
+// LỌC
 window.loc = function() {
     let key = document.getElementById("timkiem").value.toLowerCase();
-
     let filtered = ds.filter(p =>
         (p.ten || "").toLowerCase().includes(key) ||
         (p.nha || "").toLowerCase().includes(key) ||
         (p.thuoc || "").toLowerCase().includes(key)
     );
-
     hienThi(filtered);
 }
 
-// ===== CLEAR =====
+// CLEAR
 function clearForm() {
     document.querySelectorAll("input").forEach(i => i.value = "");
 }
 
-// ===== EXCEL =====
+// EXCEL
 window.xuatExcel = function() {
     let data = ds.map(p => ({
         "Họ tên": p.ten,
@@ -248,11 +211,10 @@ window.xuatExcel = function() {
     let wb = XLSX.utils.book_new();
     let ws = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
-
     XLSX.writeFile(wb, "benhnhan.xlsx");
 }
 
-// ===== AUTO LOAD =====
+// AUTO LOAD
 window.onload = loadData;
 
 </script>
