@@ -65,10 +65,11 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 
 <br>
 
-<input type="text" id="timkiem" placeholder="Lọc theo tên / nhà / thuốc / ngày..." onkeyup="loc()">
+<input type="text" id="timkiem" placeholder="Tìm kiếm..." onkeyup="loc()">
 
 <div class="container">
 <table id="bangdulieu">
+
 <thead>
 <tr>
 <th>Họ tên</th>
@@ -79,19 +80,24 @@ Ngày tái khám: <input type="date" id="ngaytaikham">
 <th>Ngày tái khám</th>
 <th>Hành động</th>
 </tr>
+
+<!-- LỌC THEO CỘT -->
+<tr>
+<th><input oninput="locCot()" placeholder="Lọc tên"></th>
+<th><input oninput="locCot()" placeholder="Lọc năm"></th>
+<th><input oninput="locCot()" placeholder="Lọc nhà"></th>
+<th><input oninput="locCot()" placeholder="Lọc thuốc"></th>
+<th></th>
+<th><input oninput="locCot()" placeholder="Lọc tái khám"></th>
+<th></th>
+</tr>
+
 </thead>
+
 <tbody id="dulieu"></tbody>
 </table>
 </div>
-<tr>
-    <th><input oninput="locCot()" placeholder="Lọc tên"></th>
-    <th><input oninput="locCot()" placeholder="Lọc năm sinh"></th>
-    <th><input oninput="locCot()" placeholder="Lọc nhà"></th>
-    <th><input oninput="locCot()" placeholder="Lọc thuốc"></th>
-    <th></th>
-    <th><input oninput="locCot()" placeholder="Lọc tái khám"></th>
-    <th></th>
-</tr>
+
 <script>
 
 let ds = JSON.parse(localStorage.getItem("ds_benhnhan")) || [];
@@ -141,9 +147,7 @@ function hienThi(data = ds) {
     let today = new Date();
     today.setHours(0,0,0,0);
 
-    data.forEach((p) => {
-
-        let index = ds.indexOf(p); // fix lỗi khi lọc
+    data.forEach((p, index) => {
 
         let mau = "";
 
@@ -218,7 +222,7 @@ function xoa(index) {
     }
 }
 
-// ===== LỌC =====
+// ===== LỌC TỔNG =====
 function loc() {
     let key = document.getElementById("timkiem").value.toLowerCase();
 
@@ -232,22 +236,7 @@ function loc() {
     hienThi(filtered);
 }
 
-// ===== RESET FORM =====
-function clearForm() {
-    document.getElementById("ten").value = "";
-    document.getElementById("namsinh").value = "";
-    document.getElementById("nha").value = "";
-    document.getElementById("thuoc").value = "";
-    document.getElementById("ngaykham").value = "";
-    document.getElementById("ngaytaikham").value = "";
-}
-
-// ===== EXCEL =====
-function xuatExcel() {
-    let table = document.getElementById("bangdulieu");
-    let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
-    XLSX.writeFile(wb, "benhnhan.xlsx");
-}
+// ===== LỌC THEO CỘT =====
 function locCot() {
     let inputs = document.querySelectorAll("thead input");
 
@@ -267,6 +256,24 @@ function locCot() {
 
     hienThi(filtered);
 }
+
+// ===== RESET =====
+function clearForm() {
+    document.getElementById("ten").value = "";
+    document.getElementById("namsinh").value = "";
+    document.getElementById("nha").value = "";
+    document.getElementById("thuoc").value = "";
+    document.getElementById("ngaykham").value = "";
+    document.getElementById("ngaytaikham").value = "";
+}
+
+// ===== EXCEL =====
+function xuatExcel() {
+    let table = document.getElementById("bangdulieu");
+    let wb = XLSX.utils.table_to_book(table, {sheet:"DanhSach"});
+    XLSX.writeFile(wb, "benhnhan.xlsx");
+}
+
 // ===== LOAD =====
 window.onload = function () {
     hienThi();
