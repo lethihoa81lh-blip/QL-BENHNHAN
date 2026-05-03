@@ -1,3 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý bệnh nhân</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+input, button { padding: 6px; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { position: sticky; top: 0; background: #f2f2f2; }
+.container { max-height: 400px; overflow-y: auto; }
+</style>
+</head>
+
+<body>
+
+<h2>Quản lý bệnh nhân</h2>
+
+<input id="ten" placeholder="Họ tên">
+<input id="namsinh" placeholder="Năm sinh">
+<input id="nha" placeholder="Nhà">
+<input id="thuoc" placeholder="Thuốc">
+
+<br>
+
+Ngày khám: <input type="date" id="ngaykham">
+Ngày tái khám: <input type="date" id="ngaytaikham">
+
+<br>
+
+<button onclick="them()">Thêm</button>
+<button onclick="capNhat()">Cập nhật</button>
+<button onclick="xuatExcel()">Xuất Excel</button>
+
+<div class="container">
+<table>
+<thead>
+<tr>
+<th>Họ tên<br><input id="locTen" onkeyup="locCot()"></th>
+<th>Năm sinh<br><input id="locNam" onkeyup="locCot()"></th>
+<th>Nhà<br><input id="locNha" onkeyup="locCot()"></th>
+<th>Thuốc<br><input id="locThuoc" onkeyup="locCot()"></th>
+<th>Ngày khám</th>
+<th>Ngày tái khám</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody id="dulieu"></tbody>
+</table>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -19,70 +74,138 @@ let idDangSua = null;
 
 // LOAD
 async function loadData() {
-    const querySnapshot = await getDocs(collection(db, "benhnhan"));
+    const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
-    querySnapshot.forEach((d) => {
-        ds.push({ id: d.id, ...d.data() });
-    });
+    snap.forEach(d => ds.push({ id: d.id, ...d.data() }));
     hienThi(ds);
 }
 
-// THÊM (ĐÃ FIX)
+// THÊM
 window.them = async function() {
-    try {
-        let ten = document.getElementById("ten").value;
-        if (!ten) return alert("Nhập tên!");
+    let ten = document.getElementById("ten").value;
+    if (!ten) return alert("Nhập tên!");
 
-        let data = layDuLieuForm();
-
-        await addDoc(collection(db, "benhnhan"), data);
-
-        alert("✅ Đã lưu lên Firebase");
-
-        clearForm();
-        loadData();
-
-    } catch (e) {
-        alert("❌ Lỗi: " + e.message);
-        console.error(e);
-    }
+    await addDoc(collection(db, "benhnhan"), layData());
+    loadData();
+    clearForm();
 }
 
 // LẤY DATA
-function layDuLieuForm() {
+function layData() {
     return {
-        ten: document.getElementById("ten").value,
-        namsinh: document.getElementById("namsinh").value,
-        nha: document.getElementById("nha").value,
-        thuoc: document.getElementById("thuoc").value,
-        ngaykham: document.getElementById("ngaykham").value,
-        ngaytaikham: document.getElementById("ngaytaikham").value
+        ten: ten.value,
+        namsinh: namsinh.value,
+        nha: nha.value,
+        thuoc: thuoc.value,
+        ngaykham: ngaykham.value,
+        ngaytaikham: ngaytaikham.value
     };
 }
 
-// HIỂN THỊ
+// HIỂN THỊ + CẢNH BÁO
 function hienThi(data) {
     let html = "";
+    let today = new Date(); today.setHours(0,0,0,0);
+
     data.forEach(p => {
+        let mau = "";
+
+        if (p.ngaytaikham) {
+            let d = new Date(p.ngaytaikham);
+            d.setHours(0,0,0,0);
+            let diff = (d - today) / (1000*60*60*24);
+
+            if (diff < 0) mau = "background:#ffcccc";
+            else if (diff <= 3) mau = "background:#fff3cd";
+        }
+
         html += `
-        <tr>
-            <td>${p.ten}</td>
-            <td>${p.namsinh}</td>
-            <td>${p.nha}</td>
-            <td>${p.thuoc}</td>
-            <td>${p.ngaykham}</td>
-            <td>${p.ngaytaikham}</td>
+        <tr style="${mau}">
+        <td>${p.ten}</td>
+        <td>${p.namsinh}</td>
+        <td>${p.nha}</td>
+        <td>${p.thuoc}</td>
+        <td>${formatDate(p.ngaykham)}</td>
+        <td>${formatDate(p.ngaytaikham)}</td>
+        <td>
+        <button onclick="sua('${p.id}')">Sửa</button>
+        <button onclick="xoa('${p.id}')">Xoá</button>
+        </td>
         </tr>`;
     });
-    document.getElementById("dulieu").innerHTML = html;
+
+    dulieu.innerHTML = html;
+}
+
+// FORMAT
+function formatDate(d){
+    if(!d) return "";
+    return new Date(d).toLocaleDateString('vi-VN');
+}
+
+// XOÁ
+window.xoa = async function(id){
+    await deleteDoc(doc(db,"benhnhan",id));
+    loadData();
+}
+
+// SỬA
+window.sua = function(id){
+    let p = ds.find(x=>x.id==id);
+    ten.value=p.ten;
+    namsinh.value=p.namsinh;
+    nha.value=p.nha;
+    thuoc.value=p.thuoc;
+    ngaykham.value=p.ngaykham;
+    ngaytaikham.value=p.ngaytaikham;
+    idDangSua=id;
+}
+
+// CẬP NHẬT
+window.capNhat = async function(){
+    await updateDoc(doc(db,"benhnhan",idDangSua), layData());
+    idDangSua=null;
+    clearForm();
+    loadData();
+}
+
+// LỌC THEO CỘT
+window.locCot = function(){
+    let f = ds.filter(p =>
+        (p.ten||"").toLowerCase().includes(locTen.value.toLowerCase()) &&
+        (p.namsinh||"").includes(locNam.value) &&
+        (p.nha||"").toLowerCase().includes(locNha.value.toLowerCase()) &&
+        (p.thuoc||"").toLowerCase().includes(locThuoc.value.toLowerCase())
+    );
+    hienThi(f);
 }
 
 // CLEAR
-function clearForm() {
-    document.querySelectorAll("input").forEach(i => i.value = "");
+function clearForm(){
+    document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// EXCEL
+window.xuatExcel=function(){
+    let data=ds.map(p=>({
+        "Tên":p.ten,
+        "Năm sinh":p.namsinh,
+        "Nhà":p.nha,
+        "Thuốc":p.thuoc,
+        "Ngày khám":formatDate(p.ngaykham),
+        "Tái khám":formatDate(p.ngaytaikham)
+    }));
+
+    let wb=XLSX.utils.book_new();
+    let ws=XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb,ws,"DS");
+    XLSX.writeFile(wb,"benhnhan.xlsx");
 }
 
 // AUTO LOAD
-window.onload = loadData;
+window.onload=loadData;
 
 </script>
+
+</body>
+</html>
