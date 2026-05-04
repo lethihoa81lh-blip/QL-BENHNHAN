@@ -51,7 +51,34 @@ th:nth-child(7), td:nth-child(7) { width: 120px; }
 </head>
 
 <body>
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
 
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* HỌ TÊN giữ rộng */
+th:nth-child(1), td:nth-child(1) {
+    width: 180px;
+    text-align: left;
+}
+
+/* các cột còn lại nhỏ lại */
+th:nth-child(2), td:nth-child(2) { width: 70px; }
+th:nth-child(3), td:nth-child(3) { width: 80px; }
+th:nth-child(4), td:nth-child(4) { width: 200px; }
+th:nth-child(5), td:nth-child(5) { width: 140px; }
+th:nth-child(6), td:nth-child(6) { width: 120px; }
+th:nth-child(7), td:nth-child(7) { width: 120px; }
 <h2>Quản lý bệnh nhân</h2>
 
 <!-- FORM -->
