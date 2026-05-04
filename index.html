@@ -14,9 +14,8 @@ input, button {
     margin: 5px;
 }
 
-/* ===== BẢNG ===== */
+/* ===== TABLE ===== */
 table {
-    table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed; /* QUAN TRỌNG NHẤT */
@@ -24,8 +23,10 @@ table {
 
 th, td {
     border: 1px solid #ccc;
-    padding: 6px 8px;
+    padding: 6px;
     font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
     white-space: nowrap;
 }
 
@@ -39,47 +40,28 @@ th {
     overflow-y: auto;
 }
 
-/* ===== CHỈNH CỘT CHO GỌN ===== */
-th:nth-child(1), td:nth-child(1) { width: 140px; }
-th:nth-child(2), td:nth-child(2) { width: 80px; }
-th:nth-child(3), td:nth-child(3) { width: 100px; }
-th:nth-child(4), td:nth-child(4) { width: 180px; }
-th:nth-child(5), td:nth-child(5) { width: 140px; }
-th:nth-child(6), td:nth-child(6) { width: 120px; }
-th:nth-child(7), td:nth-child(7) { width: 120px; }
+/* ===== THU HẸP CỘT ===== */
+th:nth-child(1), td:nth-child(1) { width: 160px; text-align: left; } /* Họ tên */
+th:nth-child(2), td:nth-child(2) { width: 80px; }  /* Năm sinh */
+th:nth-child(3), td:nth-child(3) { width: 90px; }  /* Nhà */
+th:nth-child(4), td:nth-child(4) { width: 180px; } /* Chẩn đoán */
+th:nth-child(5), td:nth-child(5) { width: 140px; } /* Thuốc */
+th:nth-child(6), td:nth-child(6) { width: 120px; } /* BHYT */
+th:nth-child(7), td:nth-child(7) { width: 120px; } /* Hành động */
 
+/* ===== CĂN GIỮA DỮ LIỆU QUAN TRỌNG ===== */
+td:nth-child(2),
+td:nth-child(3),
+td:nth-child(4),
+td:nth-child(5),
+td:nth-child(6) {
+    text-align: center;
+}
 </style>
 </head>
 
 <body>
-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
 
-th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    font-size: 14px;
-    text-align: center;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-/* HỌ TÊN giữ rộng */
-th:nth-child(1), td:nth-child(1) {
-    width: 180px;
-    text-align: left;
-}
-
-/* các cột còn lại nhỏ lại */
-th:nth-child(2), td:nth-child(2) { width: 70px; }
-th:nth-child(3), td:nth-child(3) { width: 80px; }
-th:nth-child(4), td:nth-child(4) { width: 200px; }
-th:nth-child(5), td:nth-child(5) { width: 140px; }
-th:nth-child(6), td:nth-child(6) { width: 120px; }
-th:nth-child(7), td:nth-child(7) { width: 120px; }
 <h2>Quản lý bệnh nhân</h2>
 
 <!-- FORM -->
@@ -105,11 +87,9 @@ th:nth-child(7), td:nth-child(7) { width: 120px; }
 <th>Họ tên<br><input id="f_ten" onkeyup="locCot()"></th>
 <th>Năm sinh<br><input id="f_namsinh" onkeyup="locCot()"></th>
 <th>Nhà<br><input id="f_nha" onkeyup="locCot()"></th>
-
 <th>Chẩn đoán<br><input id="f_cd" onkeyup="locCot()"></th>
 <th>Thuốc<br><input id="f_thuoc" onkeyup="locCot()"></th>
 <th>BHYT<br><input id="f_bhyt" onkeyup="locCot()"></th>
-
 <th>Hành động</th>
 </tr>
 </thead>
@@ -138,7 +118,6 @@ const db = getFirestore(app);
 let ds = [];
 let idSua = null;
 
-/* LOAD */
 async function loadData() {
     const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
@@ -146,7 +125,6 @@ async function loadData() {
     hienThi(ds);
 }
 
-/* GET DATA */
 function layData() {
     return {
         ten: ten.value,
@@ -158,7 +136,6 @@ function layData() {
     };
 }
 
-/* THÊM */
 window.them = async function () {
     if (!ten.value) return alert("Nhập họ tên!");
     await addDoc(collection(db, "benhnhan"), layData());
@@ -166,7 +143,6 @@ window.them = async function () {
     loadData();
 }
 
-/* HIỂN THỊ */
 function hienThi(data) {
     let html = "";
 
@@ -189,13 +165,11 @@ function hienThi(data) {
     dulieu.innerHTML = html;
 }
 
-/* XOÁ */
 window.xoa = async function (id) {
     await deleteDoc(doc(db, "benhnhan", id));
     loadData();
 }
 
-/* SỬA */
 window.sua = function (id) {
     let p = ds.find(x => x.id == id);
 
@@ -209,7 +183,6 @@ window.sua = function (id) {
     idSua = id;
 }
 
-/* CẬP NHẬT */
 window.capNhat = async function () {
     if (!idSua) return alert("Chọn bệnh nhân để sửa");
 
@@ -219,7 +192,6 @@ window.capNhat = async function () {
     loadData();
 }
 
-/* LỌC */
 window.locCot = function () {
     let f = ds.filter(p =>
         (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
@@ -233,7 +205,6 @@ window.locCot = function () {
     hienThi(f);
 }
 
-/* CLEAR */
 function clearForm() {
     ten.value = "";
     namsinh.value = "";
@@ -243,7 +214,6 @@ function clearForm() {
     bhyt.value = "";
 }
 
-/* EXCEL */
 window.xuatExcel = function () {
     let data = ds.map(p => ({
         "Họ tên": p.ten,
@@ -261,7 +231,6 @@ window.xuatExcel = function () {
 }
 
 window.onload = loadData;
-
 </script>
 
 </body>
