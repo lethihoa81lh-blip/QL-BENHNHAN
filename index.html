@@ -8,11 +8,45 @@
 
 <style>
 body { font-family: Arial; padding: 20px; }
-input, button { padding: 6px; margin: 5px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 8px; }
-th { background: #f2f2f2; }
-.container { max-height: 420px; overflow-y: auto; }
+
+input, button {
+    padding: 6px;
+    margin: 5px;
+}
+
+/* ===== BẢNG ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+th {
+    background: #f2f2f2;
+}
+
+/* cuộn bảng */
+.container {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* ===== CHỈNH CỘT CHO GỌN ===== */
+th:nth-child(1), td:nth-child(1) { width: 140px; }
+th:nth-child(2), td:nth-child(2) { width: 80px; }
+th:nth-child(3), td:nth-child(3) { width: 100px; }
+th:nth-child(4), td:nth-child(4) { width: 180px; }
+th:nth-child(5), td:nth-child(5) { width: 140px; }
+th:nth-child(6), td:nth-child(6) { width: 120px; }
+th:nth-child(7), td:nth-child(7) { width: 120px; }
+
 </style>
 </head>
 
@@ -58,7 +92,8 @@ th { background: #f2f2f2; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDaWhoXqZGx-DLbwEJYFghlL2FyiJrLjOA",
@@ -156,7 +191,7 @@ window.capNhat = async function () {
     loadData();
 }
 
-/* LỌC TẤT CẢ CỘT */
+/* LỌC */
 window.locCot = function () {
     let f = ds.filter(p =>
         (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
