@@ -1,19 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý bệnh nhân</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+
+input, button {
+    padding: 6px;
+    margin: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+th { background: #f2f2f2; }
+
+.container {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+th:nth-child(1), td:nth-child(1) { width: 160px; text-align: left; }
+th:nth-child(2), td:nth-child(2) { width: 80px; }
+th:nth-child(3), td:nth-child(3) { width: 90px; }
+th:nth-child(4), td:nth-child(4) { width: 180px; }
+th:nth-child(5), td:nth-child(5) { width: 140px; }
+th:nth-child(6), td:nth-child(6) { width: 120px; }
+th:nth-child(7), td:nth-child(7) { width: 120px; }
+</style>
+</head>
+
+<body>
+
+<h2>Quản lý bệnh nhân</h2>
+
+<input id="ten" placeholder="Họ tên">
+<input id="namsinh" placeholder="Năm sinh">
+<input id="nha" placeholder="Nhà">
+<input id="chandoan" placeholder="Chẩn đoán">
+<input id="thuoc" placeholder="Thuốc">
+<input id="bhyt" placeholder="Số thẻ BHYT">
+
+<br>
+
+<button onclick="them()">Thêm</button>
+<button onclick="capNhat()">Cập nhật</button>
+<button onclick="xuatExcel()">Xuất Excel</button>
+
+<h3>Tổng số bệnh nhân: <span id="tongBN">0</span></h3>
+<h4 id="tongCD"></h4>
+
+<div class="container">
+<table>
+<thead>
+<tr>
+<th>Họ tên<br><input id="f_ten" onkeyup="locCot()"></th>
+<th>Năm sinh<br><input id="f_namsinh" onkeyup="locCot()"></th>
+<th>Nhà<br><input id="f_nha" onkeyup="locCot()"></th>
+<th>Chẩn đoán<br><input id="f_cd" onkeyup="locCot()"></th>
+<th>Thuốc<br><input id="f_thuoc" onkeyup="locCot()"></th>
+<th>BHYT<br><input id="f_bhyt" onkeyup="locCot()"></th>
+<th>Hành động</th>
+</tr>
+</thead>
+
+<tbody id="dulieu"></tbody>
+</table>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDaWhoXqZGx-DLbwEJYFghlL2FyiJrLjOA",
+  authDomain: "ql-benhnhan.firebaseapp.com",
+  projectId: "ql-benhnhan",
+  storageBucket: "ql-benhnhan.firebasestorage.app",
+  messagingSenderId: "205264705273",
+  appId: "1:205264705273:web:071eef6ee888a9a6907428"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let ds = [];
+let idSua = null;
+
+async function loadData() {
+    const snap = await getDocs(collection(db, "benhnhan"));
+    ds = [];
+    snap.forEach(d => ds.push({ id: d.id, ...d.data() }));
+    hienThi(ds);
+}
+
+function layData() {
+    return {
+        ten: ten.value,
+        namsinh: namsinh.value,
+        nha: nha.value,
+        chandoan: chandoan.value,
+        thuoc: thuoc.value,
+        bhyt: bhyt.value
+    };
+}
+
+window.them = async function () {
+    if (!ten.value) return alert("Nhập họ tên!");
+    await addDoc(collection(db, "benhnhan"), layData());
+    clearForm();
+    loadData();
+}
+
+function hienThi(data) {
+    let html = "";
+
+    data.forEach(p => {
+        html += `
+        <tr>
+            <td>${p.ten || ""}</td>
+            <td>${p.namsinh || ""}</td>
+            <td>${p.nha || ""}</td>
+            <td>${p.chandoan || ""}</td>
+            <td>${p.thuoc || ""}</td>
+            <td>${p.bhyt || ""}</td>
+            <td>
+                <button onclick="sua('${p.id}')">Sửa</button>
+                <button onclick="xoa('${p.id}')">Xoá</button>
+            </td>
+        </tr>`;
+    });
+
+    dulieu.innerHTML = html;
+    tongBN.innerText = data.length;
+
+    let soCD = {};
+    data.forEach(p => {
+        let cd = p.chandoan || "Không rõ";
+        soCD[cd] = (soCD[cd] || 0) + 1;
+    });
+
+    let text = "Thống kê chẩn đoán: ";
+    for (let k in soCD) {
+        text += `${k}: ${soCD[k]} | `;
+    }
+
+    tongCD.innerText = text;
+}
+
+window.xoa = async function (id) {
+    await deleteDoc(doc(db, "benhnhan", id));
+    loadData();
+}
+
+window.sua = function (id) {
+    let p = ds.find(x => x.id == id);
+    ten.value = p.ten;
+    namsinh.value = p.namsinh;
+    nha.value = p.nha;
+    chandoan.value = p.chandoan;
+    thuoc.value = p.thuoc;
+    bhyt.value = p.bhyt;
+    idSua = id;
+}
+
+window.capNhat = async function () {
+    if (!idSua) return alert("Chọn bệnh nhân để sửa");
+    await updateDoc(doc(db, "benhnhan", idSua), layData());
+    idSua = null;
+    clearForm();
+    loadData();
+}
+
+window.locCot = function () {
+    let f = ds.filter(p =>
+        (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
+        (p.namsinh || "").includes(f_namsinh.value) &&
+        (p.nha || "").toLowerCase().includes(f_nha.value.toLowerCase()) &&
+        (p.chandoan || "").toLowerCase().includes(f_cd.value.toLowerCase()) &&
+        (p.thuoc || "").toLowerCase().includes(f_thuoc.value.toLowerCase()) &&
+        (p.bhyt || "").toLowerCase().includes(f_bhyt.value.toLowerCase())
+    );
+    hienThi(f);
+}
+
+function clearForm() {
+    ten.value = "";
+    namsinh.value = "";
+    nha.value = "";
+    chandoan.value = "";
+    thuoc.value = "";
+    bhyt.value = "";
+}
+
+/* ✅ XUẤT EXCEL ĐÃ FIX */
 window.xuatExcel = function () {
 
-    let table = document.querySelector("table"); // lấy bảng đang hiển thị
+    let table = document.querySelector("table");
 
     let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.table_to_sheet(table); // ✅ chỉ lấy dữ liệu đã lọc
+    let ws = XLSX.utils.table_to_sheet(table);
 
-    // Xoá cột "Hành động"
     let range = XLSX.utils.decode_range(ws['!ref']);
+
     for (let R = range.s.r; R <= range.e.r; ++R) {
-        let cell = XLSX.utils.encode_cell({ r: R, c: 6 }); // cột thứ 7
+        let cell = XLSX.utils.encode_cell({ r: R, c: 6 });
         delete ws[cell];
     }
-    range.e.c = 5; // chỉ giữ 6 cột
+
+    range.e.c = 5;
     ws['!ref'] = XLSX.utils.encode_range(range);
 
     XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
     XLSX.writeFile(wb, "benhnhan_loc.xlsx");
-}
+};
+
+window.onload = loadData;
+</script>
+
+</body>
+</html>
