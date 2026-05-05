@@ -49,6 +49,12 @@ th:nth-child(7), td:nth-child(7) { width: 120px; }
 
 <h2>Quản lý bệnh nhân</h2>
 
+<!-- 🔐 ADMIN LOGIN -->
+<input type="password" id="adminPass" placeholder="Mật khẩu admin">
+<button onclick="loginAdmin()">Đăng nhập admin</button>
+
+<br>
+
 <input id="ten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
@@ -58,8 +64,9 @@ th:nth-child(7), td:nth-child(7) { width: 120px; }
 
 <br>
 
-<button onclick="them()">Thêm</button>
-<button onclick="capNhat()">Cập nhật</button>
+<!-- 🔒 BUTTONS -->
+<button id="btnAdd" onclick="them()" disabled>Thêm</button>
+<button id="btnEdit" onclick="capNhat()" disabled>Cập nhật</button>
 <button onclick="xuatExcel()">Xuất Excel</button>
 
 <h3>Tổng số bệnh nhân: <span id="tongBN">0</span></h3>
@@ -102,7 +109,9 @@ const db = getFirestore(app);
 
 let ds = [];
 let idSua = null;
+let isAdmin = false;
 
+// ================= LOAD DATA =================
 async function loadData() {
     const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
@@ -110,6 +119,7 @@ async function loadData() {
     hienThi(ds);
 }
 
+// ================= DATA =================
 function layData() {
     return {
         ten: ten.value,
@@ -121,13 +131,76 @@ function layData() {
     };
 }
 
+// ================= ADMIN LOGIN =================
+window.loginAdmin = function () {
+    const pass = document.getElementById("adminPass").value;
+
+    if (pass === "123456") {
+        isAdmin = true;
+
+        document.getElementById("btnAdd").disabled = false;
+        document.getElementById("btnEdit").disabled = false;
+
+        alert("Đã vào chế độ quản trị");
+    } else {
+        alert("Sai mật khẩu");
+    }
+};
+
+// ================= ADD =================
 window.them = async function () {
+    if (!isAdmin) return alert("Không có quyền!");
+
     if (!ten.value) return alert("Nhập họ tên!");
     await addDoc(collection(db, "benhnhan"), layData());
     clearForm();
     loadData();
 }
 
+// ================= DELETE =================
+window.xoa = async function (id) {
+    if (!isAdmin) return alert("Không có quyền!");
+    await deleteDoc(doc(db, "benhnhan", id));
+    loadData();
+}
+
+// ================= EDIT =================
+window.sua = function (id) {
+    let p = ds.find(x => x.id == id);
+    ten.value = p.ten;
+    namsinh.value = p.namsinh;
+    nha.value = p.nha;
+    chandoan.value = p.chandoan;
+    thuoc.value = p.thuoc;
+    bhyt.value = p.bhyt;
+    idSua = id;
+}
+
+// ================= UPDATE =================
+window.capNhat = async function () {
+    if (!isAdmin) return alert("Không có quyền!");
+
+    if (!idSua) return alert("Chọn bệnh nhân để sửa");
+    await updateDoc(doc(db, "benhnhan", idSua), layData());
+    idSua = null;
+    clearForm();
+    loadData();
+}
+
+// ================= FILTER =================
+window.locCot = function () {
+    let f = ds.filter(p =>
+        (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
+        (p.namsinh || "").includes(f_namsinh.value) &&
+        (p.nha || "").toLowerCase().includes(f_nha.value.toLowerCase()) &&
+        (p.chandoan || "").toLowerCase().includes(f_cd.value.toLowerCase()) &&
+        (p.thuoc || "").toLowerCase().includes(f_thuoc.value.toLowerCase()) &&
+        (p.bhyt || "").toLowerCase().includes(f_bhyt.value.toLowerCase())
+    );
+    hienThi(f);
+}
+
+// ================= SHOW =================
 function hienThi(data) {
     let html = "";
 
@@ -164,42 +237,7 @@ function hienThi(data) {
     tongCD.innerText = text;
 }
 
-window.xoa = async function (id) {
-    await deleteDoc(doc(db, "benhnhan", id));
-    loadData();
-}
-
-window.sua = function (id) {
-    let p = ds.find(x => x.id == id);
-    ten.value = p.ten;
-    namsinh.value = p.namsinh;
-    nha.value = p.nha;
-    chandoan.value = p.chandoan;
-    thuoc.value = p.thuoc;
-    bhyt.value = p.bhyt;
-    idSua = id;
-}
-
-window.capNhat = async function () {
-    if (!idSua) return alert("Chọn bệnh nhân để sửa");
-    await updateDoc(doc(db, "benhnhan", idSua), layData());
-    idSua = null;
-    clearForm();
-    loadData();
-}
-
-window.locCot = function () {
-    let f = ds.filter(p =>
-        (p.ten || "").toLowerCase().includes(f_ten.value.toLowerCase()) &&
-        (p.namsinh || "").includes(f_namsinh.value) &&
-        (p.nha || "").toLowerCase().includes(f_nha.value.toLowerCase()) &&
-        (p.chandoan || "").toLowerCase().includes(f_cd.value.toLowerCase()) &&
-        (p.thuoc || "").toLowerCase().includes(f_thuoc.value.toLowerCase()) &&
-        (p.bhyt || "").toLowerCase().includes(f_bhyt.value.toLowerCase())
-    );
-    hienThi(f);
-}
-
+// ================= CLEAR =================
 function clearForm() {
     ten.value = "";
     namsinh.value = "";
@@ -209,7 +247,7 @@ function clearForm() {
     bhyt.value = "";
 }
 
-/* ✅ XUẤT EXCEL ĐÃ FIX */
+// ================= EXCEL =================
 window.xuatExcel = function () {
 
     let table = document.querySelector("table");
@@ -232,6 +270,7 @@ window.xuatExcel = function () {
 };
 
 window.onload = loadData;
+
 </script>
 
 </body>
