@@ -35,7 +35,7 @@ th { background: #f2f2f2; }
     overflow-y: auto;
 }
 
-th:nth-child(1), td:nth-child(1) { width: 160px; text-align: left; }
+th:nth-child(1), td:nth-child(1) { width: 180px; text-align: left; }
 </style>
 </head>
 
@@ -176,27 +176,28 @@ window.capNhat = async function () {
     loadData();
 };
 
-// 🔥 XỬ LÝ TIẾNG VIỆT (QUAN TRỌNG)
+// 🔥 XỬ LÝ CHUỖI SIÊU MẠNH (FIX MỌI LỖI)
 function xuLy(str) {
     return (str || "")
+        .toLowerCase()
+        .replace(/đ/g, "d")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D")
-        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
         .trim();
 }
 
 // FILTER
 window.locCot = function () {
 
-    let keyWords = xuLy(f_ten.value).split(" ").filter(x => x);
+    let key = xuLy(f_ten.value);
 
     let f = ds.filter(p => {
 
         let ten = xuLy(p.ten);
 
-        let matchTen = keyWords.every(word => ten.includes(word));
+        let matchTen = ten.indexOf(key) !== -1;
 
         return matchTen &&
             xuLy(p.namsinh).includes(xuLy(f_namsinh.value)) &&
