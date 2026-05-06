@@ -36,12 +36,6 @@ th { background: #f2f2f2; }
 }
 
 th:nth-child(1), td:nth-child(1) { width: 160px; text-align: left; }
-th:nth-child(2), td:nth-child(2) { width: 80px; }
-th:nth-child(3), td:nth-child(3) { width: 90px; }
-th:nth-child(4), td:nth-child(4) { width: 180px; }
-th:nth-child(5), td:nth-child(5) { width: 140px; }
-th:nth-child(6), td:nth-child(6) { width: 120px; }
-th:nth-child(7), td:nth-child(7) { width: 120px; }
 </style>
 </head>
 
@@ -116,7 +110,7 @@ let ds = [];
 let idSua = null;
 let isAdmin = false;
 
-// ===== LOAD =====
+// LOAD
 async function loadData() {
     const snap = await getDocs(collection(db, "benhnhan"));
     ds = [];
@@ -124,7 +118,7 @@ async function loadData() {
     hienThi(ds);
 }
 
-// ===== DATA =====
+// DATA
 function layData() {
     return {
         ten: ten.value,
@@ -136,7 +130,7 @@ function layData() {
     };
 }
 
-// ===== LOGIN =====
+// LOGIN
 window.loginAdmin = function () {
     if (adminPass.value === "571810") {
         isAdmin = true;
@@ -146,7 +140,7 @@ window.loginAdmin = function () {
     } else alert("Sai mật khẩu");
 };
 
-// ===== ADD =====
+// ADD
 window.them = async function () {
     if (!isAdmin) return alert("Không có quyền!");
     await addDoc(collection(db, "benhnhan"), layData());
@@ -154,14 +148,14 @@ window.them = async function () {
     loadData();
 };
 
-// ===== DELETE =====
+// DELETE
 window.xoa = async function (id) {
     if (!isAdmin) return alert("Không có quyền!");
     await deleteDoc(doc(db, "benhnhan", id));
     loadData();
 };
 
-// ===== EDIT =====
+// EDIT
 window.sua = function (id) {
     let p = ds.find(x => x.id == id);
     ten.value = p.ten;
@@ -173,7 +167,7 @@ window.sua = function (id) {
     idSua = id;
 };
 
-// ===== UPDATE =====
+// UPDATE
 window.capNhat = async function () {
     if (!isAdmin) return alert("Không có quyền!");
     await updateDoc(doc(db, "benhnhan", idSua), layData());
@@ -182,50 +176,45 @@ window.capNhat = async function () {
     loadData();
 };
 
-// ===== CHUẨN HOÁ =====
-function chuanHoa(str) {
-    return (str || "").normalize("NFC").toLowerCase();
-}
-
-// ===== BỎ DẤU =====
-function boDau(str) {
+// 🔥 XỬ LÝ TIẾNG VIỆT (QUAN TRỌNG)
+function xuLy(str) {
     return (str || "")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/đ/g, "d")
         .replace(/Đ/g, "D")
-        .toLowerCase();
+        .toLowerCase()
+        .trim();
 }
 
-// ===== FILTER =====
+// FILTER
 window.locCot = function () {
+
+    let keyWords = xuLy(f_ten.value).split(" ").filter(x => x);
 
     let f = ds.filter(p => {
 
-        let ten = p.ten || "";
-        let keyTen = f_ten.value;
+        let ten = xuLy(p.ten);
 
-        let matchTen =
-            chuanHoa(ten).includes(chuanHoa(keyTen)) ||
-            boDau(ten).includes(boDau(keyTen));
+        let matchTen = keyWords.every(word => ten.includes(word));
 
         return matchTen &&
-            chuanHoa(p.namsinh).includes(chuanHoa(f_namsinh.value)) &&
-            chuanHoa(p.nha).includes(chuanHoa(f_nha.value)) &&
-            chuanHoa(p.chandoan).includes(chuanHoa(f_cd.value)) &&
-            chuanHoa(p.thuoc).includes(chuanHoa(f_thuoc.value)) &&
-            chuanHoa(p.bhyt).includes(chuanHoa(f_bhyt.value));
+            xuLy(p.namsinh).includes(xuLy(f_namsinh.value)) &&
+            xuLy(p.nha).includes(xuLy(f_nha.value)) &&
+            xuLy(p.chandoan).includes(xuLy(f_cd.value)) &&
+            xuLy(p.thuoc).includes(xuLy(f_thuoc.value)) &&
+            xuLy(p.bhyt).includes(xuLy(f_bhyt.value));
     });
 
     hienThi(f);
 };
 
-// ===== LỌC BHYT =====
+// LỌC BHYT
 window.locBHYT = () => hienThi(ds.filter(p => p.bhyt && p.bhyt.trim() !== ""));
 window.locChuaBHYT = () => hienThi(ds.filter(p => !p.bhyt || p.bhyt.trim() === ""));
 window.hienTatCa = () => hienThi(ds);
 
-// ===== HIỂN THỊ =====
+// HIỂN THỊ
 function hienThi(data) {
     let html = "";
 
@@ -263,7 +252,7 @@ function hienThi(data) {
     tongCD.innerText = text;
 }
 
-// ===== CLEAR =====
+// CLEAR
 function clearForm() {
     ten.value = "";
     namsinh.value = "";
@@ -273,7 +262,7 @@ function clearForm() {
     bhyt.value = "";
 }
 
-// ===== EXCEL =====
+// EXCEL
 window.xuatExcel = function () {
     let table = document.querySelector("table");
     let wb = XLSX.utils.book_new();
@@ -282,7 +271,7 @@ window.xuatExcel = function () {
     XLSX.writeFile(wb, "benhnhan.xlsx");
 };
 
-// ===== EXCEL BHYT =====
+// EXCEL BHYT
 window.xuatExcelBHYT = function () {
     let data = ds.filter(p => p.bhyt && p.bhyt.trim() !== "");
 
