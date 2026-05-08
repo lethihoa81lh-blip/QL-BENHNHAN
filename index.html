@@ -201,7 +201,7 @@ window.locCot = function () {
 
         return matchTen &&
             xuLy(p.namsinh).includes(xuLy(f_namsinh.value)) &&
-            xuLy(p.nha).includes(xuLy(f_nha.value)) &&
+            (f_nha.value.trim() === "" || xuLy(p.nha) === xuLy(f_nha.value))
             xuLy(p.chandoan).includes(xuLy(f_cd.value)) &&
             xuLy(p.thuoc).includes(xuLy(f_thuoc.value)) &&
             xuLy(p.bhyt).includes(xuLy(f_bhyt.value));
